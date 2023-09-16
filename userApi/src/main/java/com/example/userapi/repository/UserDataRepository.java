@@ -1,6 +1,7 @@
 package com.example.userapi.repository;
 
 import com.example.userapi.model.UserData;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -10,5 +11,14 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface UserDataRepository extends ReactiveCrudRepository<UserData, Long> {
     @Query("SELECT DISTINCT ud.* FROM users_data_table ud WHERE ud.user_id = :user_id")
-    Mono<UserData> findByUserId(@Param("user_id") Long userId);
+    Mono<UserData> findByUserId(@Param("user_id") long userId);
+
+    @Modifying
+    @Query("UPDATE users_data_table SET server_seed = :serverSeed WHERE user_id = :userId")
+    Mono<Void> updateServerSeedByUsername(@Param("serverSeed") String serverSeed,
+                                            @Param("userId") long userId);
+    @Modifying
+    @Query("UPDATE users_data_table SET client_seed = :clientSeed WHERE user_id = :userId")
+    Mono<Void> updateClientSeedByUsername(@Param("serverSeed") String clientSeed,
+                                          @Param("userId") long userId);
 }

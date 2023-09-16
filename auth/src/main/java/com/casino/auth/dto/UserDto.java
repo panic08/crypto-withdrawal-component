@@ -1,6 +1,5 @@
 package com.casino.auth.dto;
 
-import com.casino.auth.model.CryptoData;
 import com.casino.auth.model.UserActivity;
 import com.casino.auth.model.UserData;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -20,14 +19,13 @@ import java.util.List;
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class UserDto {
-    private Long id;
+    private long id;
     private String username;
     @JsonIgnore
     private String password;
-    private List<CryptoData> cryptoData;
     private List<UserActivity> userActivity;
     private UserData userData;
     @JsonProperty("account_non_locked")
-    private Boolean isAccountNonLocked;
-    private Long registeredAt;
+    private boolean isAccountNonLocked;
+    private long registeredAt;
 }

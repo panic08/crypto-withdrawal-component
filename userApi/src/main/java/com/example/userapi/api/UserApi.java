@@ -1,18 +1,15 @@
 package com.example.userapi.api;
 
 import com.example.userapi.dto.UserDto;
-import com.example.userapi.model.CryptoData;
 import com.example.userapi.model.User;
 import com.example.userapi.model.UserActivity;
 import com.example.userapi.model.UserData;
-import com.example.userapi.repository.CryptoDataRepository;
 import com.example.userapi.repository.UserActivityRepository;
 import com.example.userapi.repository.UserDataRepository;
 import com.example.userapi.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -23,7 +20,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UserApi {
 
-    private final CryptoDataRepository cryptoDataRepository;
     private final UserActivityRepository userActivityRepository;
     private final UserDataRepository userDataRepository;
     private final UserRepository userRepository;
@@ -33,21 +29,18 @@ public class UserApi {
         Mono<User> userMono = userRepository.findUserByUsername(username);
 
         return userMono.flatMap(user -> {
-            Mono<List<CryptoData>> cryptoDataMono = cryptoDataRepository.findAllByUserId(user.getId()).collectList();
             Mono<List<UserActivity>> userActivityMono = userActivityRepository.findAllByUserId(user.getId()).collectList();
             Mono<UserData> userDataMono = userDataRepository.findByUserId(user.getId());
 
-            return Mono.zip(cryptoDataMono, userActivityMono, userDataMono)
+            return Mono.zip(userActivityMono, userDataMono)
                     .map(tuple -> {
-                        List<CryptoData> cryptoData = tuple.getT1();
-                        List<UserActivity> userActivity = tuple.getT2();
-                        UserData userData = tuple.getT3();
+                        List<UserActivity> userActivity = tuple.getT1();
+                        UserData userData = tuple.getT2();
 
                         UserDto userDto = new UserDto();
                         userDto.setId(user.getId());
                         userDto.setUsername(user.getUsername());
                         userDto.setPassword(user.getPassword());
-                        userDto.setCryptoData(cryptoData);
                         userDto.setUserActivity(userActivity);
                         userDto.setUserData(userData);
                         userDto.setIsAccountNonLocked(user.getIsAccountNonLocked());
@@ -78,6 +71,7 @@ public class UserApi {
     @Transactional
     @PostMapping("/userData/save")
     public Mono<UserData> saveUserData(@RequestBody UserData userData){
+        System.out.println(userData.getUserId());
         return userDataRepository.save(userData);
     }
 
@@ -87,10 +81,23 @@ public class UserApi {
         return userActivityRepository.save(userActivity);
     }
 
-    @Transactional
-    @PostMapping("/cryptoData/saveAll")
-    public Flux<CryptoData> saveAllCryptoData(@RequestBody List<CryptoData> cryptoData){
-        return cryptoDataRepository.saveAll(cryptoData);
+    @PutMapping("/userData/updateServerSeedByUserId")
+    public Mono<String> updateServerSeedByUsername(
+            @RequestParam("user_id") long userId,
+            @RequestParam("server_seed") String serverSeed
+    ){
+        return userDataRepository
+                .updateServerSeedByUsername(serverSeed, userId).then(Mono.empty());
     }
+
+    @PutMapping("/userData/updateClientSeedByUserId")
+    public Mono<String> updateClientSeedByUsername(
+            @RequestParam("user_id") long userId,
+            @RequestParam("client_seed") String clientSeed
+    ){
+        return userDataRepository
+                .updateClientSeedByUsername(clientSeed, userId).then(Mono.empty());
+    }
+
 
 }

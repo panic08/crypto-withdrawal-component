@@ -30,13 +30,13 @@ CREATE TABLE IF NOT EXISTS users_activity_table (
     FOREIGN KEY (user_id) REFERENCES users_table (id)
 );
 
-CREATE TABLE IF NOT EXISTS cryptos_data_table(
-    id SERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    type VARCHAR(255) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    public_key VARCHAR(255) NOT NULL,
-    private_key VARCHAR(255) NOT NULL,
-
-    FOREIGN KEY (user_id) REFERENCES users_table (id)
-);
+-- CREATE TABLE IF NOT EXISTS cryptos_data_table(
+--     id SERIAL PRIMARY KEY,
+--     user_id BIGINT NOT NULL,
+--     type VARCHAR(255) NOT NULL,
+--     address VARCHAR(255) NOT NULL,
+--     public_key VARCHAR(255) NOT NULL,
+--     private_key VARCHAR(255) NOT NULL,
+--
+--     FOREIGN KEY (user_id) REFERENCES users_table (id)
+-- );

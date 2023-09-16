@@ -3,6 +3,7 @@ package com.casino.auth.controller;
 import com.casino.auth.dto.UserDto;
 import com.casino.auth.payload.AuthorizationRequest;
 import com.casino.auth.payload.AuthorizationResponse;
+import com.casino.auth.payload.vk.VkAuthorizationRequest;
 import com.casino.auth.service.implement.AuthorizationServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,4 +32,5 @@ public class AuthorizationController {
     public Mono<UserDto> getInfoByToken(@RequestParam("token") String token){
         return authorizationService.getInfoByToken(token);
     }
+
 }

@@ -83,6 +83,11 @@ public class UserApi {
         return userRepository.findUserByUsername(username);
     }
 
+    @GetMapping("/user/findOriginalUserById")
+    public Mono<User> findOriginalUserById(@RequestParam("id") long id){
+        return userRepository.findById(id);
+    }
+
     @Transactional
     @PostMapping("/user/save")
     public Mono<User> saveUser(@RequestBody User user){

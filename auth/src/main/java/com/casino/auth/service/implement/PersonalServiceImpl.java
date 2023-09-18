@@ -3,7 +3,6 @@ package com.casino.auth.service.implement;
 import com.casino.auth.exception.FileSizeExceedsLimitException;
 import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.InvalidFileExtensionException;
-import com.casino.auth.model.User;
 import com.casino.auth.payload.ChangeClientSeedRequest;
 import com.casino.auth.payload.ChangeClientSeedResponse;
 import com.casino.auth.payload.ChangeServerSeedResponse;
@@ -28,37 +27,33 @@ public class PersonalServiceImpl implements PersonalService {
     private final JwtUtil jwtUtil;
     private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
             "/srv/photos/" : "D:/photos/";
-    private static final String FIND_ORIGINAL_USER_BY_USERNAME_URL = "http://localhost:8081/api/user/findOriginalUserByUsername";
     private static final String UPDATE_SERVER_SEED_BY_USERID = "http://localhost:8081/api/userData/updateServerSeedByUserId";
     private static final String UPDATE_CLIENT_SEED_BY_USERID = "http://localhost:8081/api/userData/updateClientSeedByUserId";
 
     @Override
     public Mono<ChangeServerSeedResponse> changeServerSeed(String authorization) {
-        return jwtUtil.extractUsername(authorization.split(" ")[1])
-                .flatMap(this::findOriginalUserByUsername)
+        return jwtUtil.extractId(authorization.split(" ")[1])
                 .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
-                .flatMap(user -> {
+                .flatMap(id -> {
                     String hex = HexGeneratorUtil.generateHex();
 
-                    return changeServerSeed(user.getId(), hex).thenReturn(new ChangeServerSeedResponse(hex));
+                    return changeServerSeed(id, hex).thenReturn(new ChangeServerSeedResponse(hex));
                 });
     }
 
     @Override
     public Mono<ChangeClientSeedResponse> changeClientSeed(String authorization, ChangeClientSeedRequest changeClientSeedRequest) {
-        return jwtUtil.extractUsername(authorization.split(" ")[1])
-                .flatMap(this::findOriginalUserByUsername)
+        return jwtUtil.extractId(authorization.split(" ")[1])
                 .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
-                .flatMap(user -> changeClientSeed(user.getId(),
-                        changeClientSeedRequest.getClientSeed()).thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
+                .flatMap(id -> changeClientSeed(id,
+                        changeClientSeedRequest.getClientSeed())
+                        .thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
     }
 
     public Mono<Void> changePhoto(String authorization, FilePart multipartFile) {
-        return jwtUtil.extractUsername(authorization.split(" ")[1])
-                .flatMap(this::findOriginalUserByUsername)
+        return jwtUtil.extractId(authorization.split(" ")[1])
                 .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
-                .flatMap(user -> {
-                    long id = user.getId();
+                .flatMap(id -> {
 
                     long maxSizeBytes = 1024 * 1024;
                     long size = multipartFile.headers().getContentLength();
@@ -92,14 +87,6 @@ public class PersonalServiceImpl implements PersonalService {
     }
 
 
-    private Mono<User> findOriginalUserByUsername(String username){
-        return webClient
-                .baseUrl(FIND_ORIGINAL_USER_BY_USERNAME_URL + "?username=" + username)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(User.class);
-    }
     private Mono<Void> changeServerSeed(long userId, String serverSeed){
         return webClient.baseUrl(UPDATE_SERVER_SEED_BY_USERID + "?user_id=" + userId
                 + "&server_seed=" + serverSeed)

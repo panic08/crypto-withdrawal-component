@@ -1,6 +1,6 @@
 package com.casino.auth.handler;
 
-import com.casino.auth.exception.InvalidFileExtensionException;
+import com.casino.auth.exception.UserAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -12,18 +12,18 @@ import java.util.Date;
 import java.util.HashMap;
 
 @RestControllerAdvice
-public class InvalidFileExtensionAdvancedHandler {
+public class UserAlreadyExistsAdvancedHandler {
     @ResponseBody
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    @ExceptionHandler(InvalidFileExtensionException.class)
-    public Mono<HashMap<Object, Object>> handleInvalidCredentialsException(InvalidFileExtensionException invalidFileExtensionException){
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public Mono<HashMap<Object, Object>> handleUserAlreadyExistsException(UserAlreadyExistsException userAlreadyExistsException){
         return Mono.fromCallable(() -> {
             HashMap<Object, Object> hashMap = new HashMap<>();
 
             hashMap.put("timestamp", new Date());
-            hashMap.put("status", 400);
-            hashMap.put("error", "Bad request");
-            hashMap.put("message", invalidFileExtensionException.getMessage());
+            hashMap.put("status", 409);
+            hashMap.put("error", "Conflict");
+            hashMap.put("message", userAlreadyExistsException.getMessage());
 
             return hashMap;
         });

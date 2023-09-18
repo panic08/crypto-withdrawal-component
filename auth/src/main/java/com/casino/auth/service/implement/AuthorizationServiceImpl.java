@@ -4,6 +4,7 @@ import com.casino.auth.dto.UserDto;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserDataRole;
 import com.casino.auth.exception.InvalidCredentialsException;
+import com.casino.auth.exception.UserAlreadyExistsException;
 import com.casino.auth.mapper.AuthorizationRequestToUserActivityMapperImpl;
 import com.casino.auth.mapper.AuthorizationRequestToUserMapperImpl;
 import com.casino.auth.model.User;
@@ -34,7 +35,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private static final String SAVE_USER_ACTIVITY_URL = "http://localhost:8081/api/userActivity/save";
     private static final String SAVE_USER_DATA_URL = "http://localhost:8081/api/userData/save";
     private static final String FIND_ORIGINAL_USER_BY_USERNAME_URL = "http://localhost:8081/api/user/findOriginalUserByUsername";
-    private static final String FIND_USER_BY_USERNAME_URL = "http://localhost:8081/api/user/findUserByUsername";
+    private static final String FIND_USER_BY_ID_URL = "http://localhost:8081/api/user/findUserById";
+
 
     @Override
     public Mono<AuthorizationResponse> handleRegister(AuthorizationRequest authorizationRequest) {
@@ -46,9 +48,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
             return user;
         }).flatMap(user -> existsByUsername(user.getUsername())
-                .flatMap(savedNonSuccessfully -> {
-                    if (savedNonSuccessfully){
-                        return Mono.error(new InvalidCredentialsException("Invalid login or password"));
+                .flatMap(exists-> {
+                    if (exists){
+                        return Mono.error(new UserAlreadyExistsException("This user already exists"));
                     }
 
                     return saveUser(user)
@@ -73,11 +75,12 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                                         HexGeneratorUtil.generateHex()
                                 );
 
+
                                 return Mono.zip(
                                         saveUserActivity(userActivity),
                                         saveUserData(userData)
-                                );
-                            }).then(jwtUtil.generateToken(user)).map(AuthorizationResponse::new);
+                                ).then(jwtUtil.generateToken(savedUser)).map(AuthorizationResponse::new);
+                            });
                 }));
     }
 
@@ -103,17 +106,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     public Mono<UserDto> getInfoByToken(String token) {
-        return jwtUtil.extractUsername(token)
-                .flatMap(this::findUserByUsername);
-    }
-
-    private Mono<UserDto> findUserByUsername(String username){
-        return webClient
-                .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + username)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(UserDto.class);
+        return jwtUtil.extractId(token)
+                .flatMap(this::findUserById)
+                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")));
     }
     private Mono<User> findOriginalUserByUsername(String username){
         return webClient
@@ -142,6 +137,15 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 .retrieve()
                 .bodyToMono(User.class)
                 .cache();
+    }
+
+    private Mono<UserDto> findUserById(long id){
+        return webClient
+                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
+                .build()
+                .get()
+                .retrieve()
+                .bodyToMono(UserDto.class);
     }
 
     private Mono<UserData> saveUserData(UserData userData){

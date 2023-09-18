@@ -11,11 +11,6 @@ import com.casino.auth.security.jwt.JwtUtil;
 import com.casino.auth.service.PersonalService;
 import com.casino.auth.util.HexGeneratorUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.CacheControl;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -24,7 +19,6 @@ import reactor.core.publisher.Mono;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -59,39 +53,7 @@ public class PersonalServiceImpl implements PersonalService {
                         changeClientSeedRequest.getClientSeed()).thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
     }
 
-    @Override
-    public Mono<ResponseEntity<Resource>> getPhoto(long id) {
-        return Mono.fromSupplier(() -> {
-            try {
-                File file1 = new File(Paths.get(UPLOAD_DIR, id + ".jpg").toUri());
-                File file2 = new File(Paths.get(UPLOAD_DIR, id + ".png").toUri());
-
-                if (file1.exists()) {
-                    Resource resource = new FileSystemResource(file1);
-
-                    return ResponseEntity.ok()
-                            .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS))
-                            .contentLength(file1.length())
-                            .contentType(MediaType.IMAGE_JPEG)
-                            .body(resource);
-                } else if (file2.exists()) {
-                    Resource resource = new FileSystemResource(file2);
-
-                    return ResponseEntity.ok()
-                            .cacheControl(CacheControl.maxAge(365, TimeUnit.DAYS))
-                            .contentLength(file2.length())
-                            .contentType(MediaType.IMAGE_PNG)
-                            .body(resource);
-                } else {
-                    return ResponseEntity.notFound().build();
-                }
-            } catch (Exception e) {
-                return ResponseEntity.status(500).build();
-            }
-        });
-    }
-
-    public Mono<Void> uploadPhoto(String authorization, FilePart multipartFile) {
+    public Mono<Void> changePhoto(String authorization, FilePart multipartFile) {
         return jwtUtil.extractUsername(authorization.split(" ")[1])
                 .flatMap(this::findOriginalUserByUsername)
                 .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
@@ -113,7 +75,6 @@ public class PersonalServiceImpl implements PersonalService {
                     }
 
                     Path filePath = Paths.get(UPLOAD_DIR, id + extension);
-                    File file = new File(filePath.toUri());
 
                     File file1 = new File(Paths.get(UPLOAD_DIR, id + ".jpg").toUri());
                     File file2 = new File(Paths.get(UPLOAD_DIR, id + ".png").toUri());

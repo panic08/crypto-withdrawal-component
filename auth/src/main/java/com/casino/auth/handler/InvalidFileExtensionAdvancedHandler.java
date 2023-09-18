@@ -1,6 +1,5 @@
 package com.casino.auth.handler;
 
-import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.InvalidFileExtensionException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;

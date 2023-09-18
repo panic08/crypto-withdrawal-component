@@ -50,6 +50,34 @@ public class UserApi {
                     });
         });
     }
+
+    @GetMapping("/user/findUserById")
+    public Mono<UserDto> findUserByUsername(@RequestParam("id") long id) {
+        Mono<User> userMono = userRepository.findById(id);
+
+        return userMono.flatMap(user -> {
+            Mono<List<UserActivity>> userActivityMono = userActivityRepository.findAllByUserId(user.getId()).collectList();
+            Mono<UserData> userDataMono = userDataRepository.findByUserId(user.getId());
+
+            return Mono.zip(userActivityMono, userDataMono)
+                    .map(tuple -> {
+                        List<UserActivity> userActivity = tuple.getT1();
+                        UserData userData = tuple.getT2();
+
+                        UserDto userDto = new UserDto();
+                        userDto.setId(user.getId());
+                        userDto.setUsername(user.getUsername());
+                        userDto.setPassword(user.getPassword());
+                        userDto.setUserActivity(userActivity);
+                        userDto.setUserData(userData);
+                        userDto.setIsAccountNonLocked(user.getIsAccountNonLocked());
+                        userDto.setRegisteredAt(user.getRegisteredAt());
+
+                        return userDto;
+                    });
+        });
+    }
+
     @GetMapping("/user/findOriginalUserByUsername")
     public Mono<User> findOriginalUserByUsername(@RequestParam("username") String username){
         return userRepository.findUserByUsername(username);
@@ -71,7 +99,6 @@ public class UserApi {
     @Transactional
     @PostMapping("/userData/save")
     public Mono<UserData> saveUserData(@RequestBody UserData userData){
-        System.out.println(userData.getUserId());
         return userDataRepository.save(userData);
     }
 

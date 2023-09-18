@@ -1,19 +1,15 @@
 package com.casino.auth.controller;
 
 import com.casino.auth.payload.AuthorizationResponse;
+import com.casino.auth.payload.google.GoogleAuthorizationRequest;
 import com.casino.auth.payload.vk.VkAuthorizationRequest;
-import com.casino.auth.property.VkOAuthProperties;
 import com.casino.auth.service.implement.OAuthServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
 
 @RestController
 @RequestMapping("/api/oauth")
@@ -26,9 +22,20 @@ public class OAuthController {
         return oAuthService.handleRedirectVK();
     }
 
+    @GetMapping("/google")
+    public Mono<ResponseEntity<Void>> redirectGoogle(){
+        return oAuthService.handleRedirectGoogle();
+    }
+
     @PostMapping("/authorizeByVk")
     public Mono<AuthorizationResponse> handleAuthorizeByVk(@Valid
                                                                 @RequestBody VkAuthorizationRequest vkAuthorizationRequest){
         return oAuthService.handleAuthorizeByVk(vkAuthorizationRequest);
+    }
+
+    @PostMapping("/authorizeByGoogle")
+    public Mono<AuthorizationResponse> handleAuthorizeByGoogle(@Valid
+                                                               @RequestBody GoogleAuthorizationRequest googleAuthorizationRequest){
+        return oAuthService.handleAuthorizeByGoogle(googleAuthorizationRequest);
     }
 }

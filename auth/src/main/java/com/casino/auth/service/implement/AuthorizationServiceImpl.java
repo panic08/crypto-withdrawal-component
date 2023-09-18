@@ -83,7 +83,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     public Mono<AuthorizationResponse> handleLogin(AuthorizationRequest authorizationRequest) {
-        Mono<User> userMono = findUserByUsername(authorizationRequest.getUsername());
+        Mono<User> userMono = findOriginalUserByUsername(authorizationRequest.getUsername());
 
         return userMono.flatMap(user -> {
             if (!bCryptPasswordEncoder.matches(authorizationRequest.getPassword(), user.getPassword())){
@@ -104,16 +104,18 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     @Override
     public Mono<UserDto> getInfoByToken(String token) {
         return jwtUtil.extractUsername(token)
-                .flatMap(s -> webClient
-                        .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + s)
-                        .build()
-                        .get()
-                        .retrieve()
-                        .bodyToMono(UserDto.class)
-                );
+                .flatMap(this::findUserByUsername);
     }
 
-    private Mono<User> findUserByUsername(String username){
+    private Mono<UserDto> findUserByUsername(String username){
+        return webClient
+                .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + username)
+                .build()
+                .get()
+                .retrieve()
+                .bodyToMono(UserDto.class);
+    }
+    private Mono<User> findOriginalUserByUsername(String username){
         return webClient
                 .baseUrl(FIND_ORIGINAL_USER_BY_USERNAME_URL + "?username=" + username)
                 .build()

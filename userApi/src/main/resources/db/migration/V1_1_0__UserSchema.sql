@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS users_table(
 CREATE TABLE IF NOT EXISTS users_data_table(
     id SERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL,
+    profile_type VARCHAR(255) NOT NULL,
     nickname VARCHAR(255) NOT NULL,
     balance BIGINT NOT NULL,
     role VARCHAR(255) NOT NULL,
@@ -16,7 +17,6 @@ CREATE TABLE IF NOT EXISTS users_data_table(
     client_seed VARCHAR(255) NOT NULL,
 
     FOREIGN KEY (user_id) REFERENCES users_table (id)
-
 );
 CREATE TABLE IF NOT EXISTS users_activity_table (
     id SERIAL PRIMARY KEY,

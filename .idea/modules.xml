@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/auth.main.iml" filepath="$PROJECT_DIR$/.idea/modules/auth.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/casino.iml" filepath="$PROJECT_DIR$/casino.iml" />
       <module fileurl="file://$PROJECT_DIR$/cryptoFactory/cryptoFactory.iml" filepath="$PROJECT_DIR$/cryptoFactory/cryptoFactory.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/replenishmentApi.main.iml" filepath="$PROJECT_DIR$/.idea/modules/replenishmentApi.main.iml" />
     </modules>
   </component>
 </project>

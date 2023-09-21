@@ -1,6 +1,7 @@
 package com.example.userapi.api;
 
 import com.example.userapi.dto.UserDto;
+import com.example.userapi.enums.UserDataProfileType;
 import com.example.userapi.model.User;
 import com.example.userapi.model.UserActivity;
 import com.example.userapi.model.UserData;
@@ -114,21 +115,28 @@ public class UserApi {
     }
 
     @PutMapping("/userData/updateServerSeedByUserId")
-    public Mono<String> updateServerSeedByUsername(
+    public Mono<Void> updateServerSeedByUsername(
             @RequestParam("user_id") long userId,
             @RequestParam("server_seed") String serverSeed
     ){
         return userDataRepository
-                .updateServerSeedByUsername(serverSeed, userId).then(Mono.empty());
+                .updateServerSeedById(serverSeed, userId);
     }
 
     @PutMapping("/userData/updateClientSeedByUserId")
-    public Mono<String> updateClientSeedByUsername(
+    public Mono<Void> updateClientSeedByUsername(
             @RequestParam("user_id") long userId,
             @RequestParam("client_seed") String clientSeed
     ){
         return userDataRepository
-                .updateClientSeedByUsername(clientSeed, userId).then(Mono.empty());
+                .updateClientSeedById(clientSeed, userId);
+    }
+
+    @PutMapping("/userData/updateProfileTypeByUserId")
+    public Mono<Void> updateProfileTypeByUserId(@RequestParam("user_id") long userId,
+                                                  @RequestParam("profile_type") UserDataProfileType profileType
+    ){
+        return userDataRepository.updateProfileTypeById(profileType, userId);
     }
 
 

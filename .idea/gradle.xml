@@ -13,6 +13,22 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/replenishmentApi" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/replenishmentApi" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/replenishmentCreate" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/replenishmentCreate" />
+          </set>
+        </option>
+      </GradleProjectSettings>
+      <GradleProjectSettings>
         <option name="externalProjectPath" value="$PROJECT_DIR$/userApi" />
         <option name="modules">
           <set>

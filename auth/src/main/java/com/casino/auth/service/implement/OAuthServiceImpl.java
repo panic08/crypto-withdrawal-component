@@ -5,6 +5,7 @@ import com.casino.auth.dto.google.GoogleAccessTokenRequest;
 import com.casino.auth.dto.google.GoogleCertsDto;
 import com.casino.auth.dto.vk.VkAccessTokenDto;
 import com.casino.auth.dto.vk.VkUserDto;
+import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserDataRole;
 import com.casino.auth.mapper.GoogleAuthorizationRequestToUserActivityMapperImpl;
@@ -143,6 +144,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                 UserData userData = new UserData(
                                                         null,
                                                         userId,
+                                                        UserDataProfileType.PUBLIC,
                                                         nickname,
                                                         0L,
                                                         UserDataRole.DEFAULT,
@@ -268,6 +270,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                 UserData userData = new UserData(
                                                         null,
                                                         userId,
+                                                        UserDataProfileType.PUBLIC,
                                                         nickname,
                                                         0L,
                                                         UserDataRole.DEFAULT,
@@ -277,7 +280,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                 );
 
                                                 return Mono.zip(saveUserActivity(userActivity), saveUserData(userData))
-                                                        .then(jwtUtil.generateToken(user).map(AuthorizationResponse::new));
+                                                        .then(jwtUtil.generateToken(savedUser).map(AuthorizationResponse::new));
                                             });
                                 }
                             });

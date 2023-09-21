@@ -1,6 +1,8 @@
 package com.casino.auth.service.implement;
 
+import com.casino.auth.dto.PublishUserDto;
 import com.casino.auth.dto.UserDto;
+import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
@@ -58,16 +60,22 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Mono<UserDto> getUserById(long id) {
-        return findUserById(id);
+    public Mono<PublishUserDto> getUserById(long id) {
+        return findUserById(id).map(userDto -> {
+            if(userDto.getUserData().getProfileType().equals(UserDataProfileType.PRIVATE)){
+                userDto.getUserData().setBalance(null);
+            }
+
+            return userDto;
+        });
     }
 
-    private Mono<UserDto> findUserById(long id){
+    private Mono<PublishUserDto> findUserById(long id){
         return webClient
                 .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()
                 .retrieve()
-                .bodyToMono(UserDto.class);
+                .bodyToMono(PublishUserDto.class);
     }
 }

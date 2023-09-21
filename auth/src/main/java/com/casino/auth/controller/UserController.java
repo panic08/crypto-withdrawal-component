@@ -1,5 +1,6 @@
 package com.casino.auth.controller;
 
+import com.casino.auth.dto.PublishUserDto;
 import com.casino.auth.dto.UserDto;
 import com.casino.auth.service.implement.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class UserController {
     private final UserServiceImpl userService;
 
     @GetMapping("/{id}")
-    public Mono<UserDto> get(@PathVariable("id") long id){
+    public Mono<PublishUserDto> get(@PathVariable("id") long id){
         return userService.getUserById(id);
     }
 

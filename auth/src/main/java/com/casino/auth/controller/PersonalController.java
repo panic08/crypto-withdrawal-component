@@ -1,8 +1,6 @@
 package com.casino.auth.controller;
 
-import com.casino.auth.payload.ChangeClientSeedRequest;
-import com.casino.auth.payload.ChangeClientSeedResponse;
-import com.casino.auth.payload.ChangeServerSeedResponse;
+import com.casino.auth.payload.*;
 import com.casino.auth.service.implement.PersonalServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,4 +32,10 @@ public class PersonalController {
         return personalService.changeClientSeed(authorization, changeClientSeedRequest);
     }
 
+    @PutMapping("/changeProfileType")
+    public Mono<ChangeProfileTypeResponse> changeProfileType(@RequestHeader("Authorization") String authorization,
+                                                             @RequestBody ChangeProfileTypeRequest changeProfileTypeRequest
+                                                            ){
+        return personalService.changeProfileType(authorization, changeProfileTypeRequest);
+    }
 }

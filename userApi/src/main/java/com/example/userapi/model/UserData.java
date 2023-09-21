@@ -1,5 +1,6 @@
 package com.example.userapi.model;
 
+import com.example.userapi.enums.UserDataProfileType;
 import com.example.userapi.enums.UserDataRank;
 import com.example.userapi.enums.UserDataRole;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -19,6 +20,9 @@ public class UserData {
 
     @Column("user_id")
     private Long userId;
+
+    @Column("profile_type")
+    private UserDataProfileType profileType;
 
     @Column("nickname")
     private String nickname;

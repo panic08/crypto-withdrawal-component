@@ -1,6 +1,7 @@
 package com.casino.auth.service.implement;
 
 import com.casino.auth.dto.UserDto;
+import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserDataRole;
 import com.casino.auth.exception.InvalidCredentialsException;
@@ -67,6 +68,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                                 UserData userData = new UserData(
                                         null,
                                         userId,
+                                        UserDataProfileType.PUBLIC,
                                         username,
                                         0L,
                                         UserDataRole.DEFAULT,

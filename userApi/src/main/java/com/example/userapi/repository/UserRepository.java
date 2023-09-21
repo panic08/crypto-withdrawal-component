@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono;
 
 @Repository
 public interface UserRepository extends ReactiveCrudRepository<User, Long> {
-    @Query("SELECT DISTINCT u.* FROM users_table u WHERE u.username = :username")
+    @Query("SELECT u.* FROM users_table u WHERE u.username = :username")
     Mono<User> findUserByUsername(@Param("username") String username);
 
 

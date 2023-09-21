@@ -1,8 +1,10 @@
 package com.casino.auth.model;
 
+import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserDataRole;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
@@ -12,11 +14,12 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserData {
-    @JsonIgnore
     private Long id;
 //    @JsonIgnore
     private Long userId;
+    private UserDataProfileType profileType;
     private String nickname;
     private Long balance;
     private UserDataRole role;

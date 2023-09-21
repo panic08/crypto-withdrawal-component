@@ -1,11 +1,10 @@
 package com.casino.auth.service.implement;
 
+import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.exception.FileSizeExceedsLimitException;
 import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.InvalidFileExtensionException;
-import com.casino.auth.payload.ChangeClientSeedRequest;
-import com.casino.auth.payload.ChangeClientSeedResponse;
-import com.casino.auth.payload.ChangeServerSeedResponse;
+import com.casino.auth.payload.*;
 import com.casino.auth.security.jwt.JwtUtil;
 import com.casino.auth.service.PersonalService;
 import com.casino.auth.util.HexGeneratorUtil;
@@ -29,6 +28,7 @@ public class PersonalServiceImpl implements PersonalService {
             "/srv/photos/" : "D:/photos/";
     private static final String UPDATE_SERVER_SEED_BY_USERID = "http://localhost:8081/api/userData/updateServerSeedByUserId";
     private static final String UPDATE_CLIENT_SEED_BY_USERID = "http://localhost:8081/api/userData/updateClientSeedByUserId";
+    private static final String UPDATE_PROFILE_TYPE_BY_USERID = "http://localhost:8081/api/userData/updateProfileTypeByUserId";
 
     @Override
     public Mono<ChangeServerSeedResponse> changeServerSeed(String authorization) {
@@ -48,6 +48,15 @@ public class PersonalServiceImpl implements PersonalService {
                 .flatMap(id -> changeClientSeed(id,
                         changeClientSeedRequest.getClientSeed())
                         .thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
+    }
+
+    @Override
+    public Mono<ChangeProfileTypeResponse> changeProfileType(String authorization, ChangeProfileTypeRequest changeProfileTypeRequest) {
+        return jwtUtil.extractId(authorization.split(" ")[1])
+                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
+                .flatMap(id -> changeProfileType(id,
+                        changeProfileTypeRequest.getProfileType())
+                        .thenReturn(new ChangeProfileTypeResponse(changeProfileTypeRequest.getProfileType())));
     }
 
     public Mono<Void> changePhoto(String authorization, FilePart multipartFile) {
@@ -100,6 +109,16 @@ public class PersonalServiceImpl implements PersonalService {
     private Mono<Void> changeClientSeed(long userId, String clientSeed){
         return webClient.baseUrl(UPDATE_CLIENT_SEED_BY_USERID + "?user_id=" + userId
                         + "&client_seed=" + clientSeed)
+                .build()
+                .put()
+                .retrieve()
+                .bodyToMono(Void.class)
+                .cache();
+    }
+
+    private Mono<Void> changeProfileType(long userId, UserDataProfileType profileType){
+        return webClient.baseUrl(UPDATE_PROFILE_TYPE_BY_USERID + "?user_id=" + userId
+                + "&profile_type=" + profileType)
                 .build()
                 .put()
                 .retrieve()

@@ -21,10 +21,10 @@
         </option>
       </GradleProjectSettings>
       <GradleProjectSettings>
-        <option name="externalProjectPath" value="$PROJECT_DIR$/replenishmentCreate" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$/replenishments" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/replenishmentCreate" />
+            <option value="$PROJECT_DIR$/replenishments" />
           </set>
         </option>
       </GradleProjectSettings>

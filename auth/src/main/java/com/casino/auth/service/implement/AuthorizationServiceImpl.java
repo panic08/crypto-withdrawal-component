@@ -4,6 +4,7 @@ import com.casino.auth.dto.UserDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserDataRole;
+import com.casino.auth.exception.IncorrectTokenProvidedException;
 import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.UserAlreadyExistsException;
 import com.casino.auth.mapper.AuthorizationRequestToUserActivityMapperImpl;
@@ -110,7 +111,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     public Mono<UserDto> getInfoByToken(String token) {
         return jwtUtil.extractId(token)
                 .flatMap(this::findUserById)
-                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")));
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")));
     }
     private Mono<User> findOriginalUserByUsername(String username){
         return webClient

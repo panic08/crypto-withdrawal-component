@@ -1,7 +1,7 @@
 package com.casino.replenishmentapi.model;
 
 import com.casino.replenishmentapi.enums.ReplenishmentCurrency;
-import com.casino.replenishmentapi.enums.ReplenishmentType;
+import com.casino.replenishmentapi.enums.ReplenishmentMethod;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
@@ -20,8 +20,8 @@ public class Replenishment {
     @Column("user_id")
     private Long userId;
 
-    @Column("type")
-    private ReplenishmentType type;
+    @Column("method")
+    private ReplenishmentMethod method;
 
     @Column("currency")
     private ReplenishmentCurrency currency;

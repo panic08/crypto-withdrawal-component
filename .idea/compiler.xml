@@ -5,14 +5,18 @@
       <profile name="Gradle Imported" enabled="true">
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="false">
-          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.28/a2ff5da8bcd8b1b26f36b806ced63213362c6dcc/lombok-1.18.28.jar" />
+          <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mapstruct/mapstruct-processor/1.5.5.Final/897f6f115930b936287bef552bf5fe28cc64717d/mapstruct-processor-1.5.5.Final.jar" />
         </processorPath>
-        <module name="replenishmentCreate.main" />
+        <module name="replenishments.main" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="replenishmentCreate" target="17" />
+      <module name="replenishmentCreate.aot" target="17" />
+      <module name="replenishmentCreate.aotTest" target="17" />
+      <module name="replenishmentCreate.main" target="17" />
+      <module name="replenishmentCreate.test" target="17" />
     </bytecodeTargetLevel>
   </component>
 </project>

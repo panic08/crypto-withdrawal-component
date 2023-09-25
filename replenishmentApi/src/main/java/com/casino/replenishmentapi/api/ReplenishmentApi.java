@@ -1,10 +1,12 @@
 package com.casino.replenishmentapi.api;
 
-import com.casino.replenishmentapi.dto.ReplenishmentDto;
-import com.casino.replenishmentapi.model.ReplenishmentData;
-import com.casino.replenishmentapi.repository.ReplenishmentDataRepository;
+import com.casino.replenishmentapi.enums.CryptoReplenishmentSessionCurrency;
+import com.casino.replenishmentapi.model.CryptoReplenishmentSession;
+import com.casino.replenishmentapi.model.Replenishment;
+import com.casino.replenishmentapi.repository.CryptoReplenishmentSessionRepository;
 import com.casino.replenishmentapi.repository.ReplenishmentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -16,36 +18,31 @@ import reactor.core.publisher.Mono;
 public class ReplenishmentApi {
 
     private final ReplenishmentRepository replenishmentRepository;
-    private final ReplenishmentDataRepository replenishmentDataRepository;
+    private final CryptoReplenishmentSessionRepository cryptoReplenishmentSessionRepository;
 
-    @GetMapping("/replenishment/findAllReplenishment")
-    public Flux<ReplenishmentDto> getAllReplenishment(
+    @GetMapping("/replenishment/findAllOriginalReplenishmentByIdWithLimit")
+    public Flux<Replenishment> findAllOriginalReplenishmentWithLimit(
             @RequestParam("userId") long userId,
-            @RequestParam("limit") int limit,
             @RequestParam("startIndex") int startIndex,
             @RequestParam("endIndex") int endIndex
-    ){
-        return replenishmentRepository.findAllByUserIdByCreatedAtDesc(userId, limit)
-                .flatMap(replenishment -> {
-                    Mono<ReplenishmentData> replenishmentDataMono =
-                            replenishmentDataRepository.findById(replenishment.getId());
-
-                    ReplenishmentDto replenishmentDto = new ReplenishmentDto();
-
-                    replenishmentDto.setId(replenishment.getId());
-                    replenishmentDto.setUserId(replenishment.getUserId());
-                    replenishmentDto.setType(replenishment.getType());
-                    replenishmentDto.setCurrency(replenishment.getCurrency());
-                    replenishmentDto.setAmount(replenishment.getAmount());
-                    replenishmentDto.setCreatedAt(replenishment.getCreatedAt());
-
-                    return replenishmentDataMono.flatMap(replenishmentData -> {
-                        replenishmentDto.setReplenishmentData(replenishmentData);
-
-                        return Mono.just(replenishmentDto);
-                    });
-                })
-                .skip(startIndex)
-                .take(endIndex - startIndex + 1);
+    ) {
+        return replenishmentRepository.findAllByUserIdByCreatedAtDesc(userId, startIndex, endIndex);
     }
+
+    @GetMapping("/cryptoReplenishmentSession/findCryptoReplenishmentSessionByUserIdAndCurrency")
+    public Mono<CryptoReplenishmentSession> findCryptoReplenishmentSessionByUserIdAndCurrency(
+            @RequestParam("userId") long userId,
+            @RequestParam("currency") CryptoReplenishmentSessionCurrency currency
+            ){
+        return cryptoReplenishmentSessionRepository
+                .findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
+    }
+
+    @Transactional
+    @PostMapping("/cryptoReplenishmentSession/save")
+    public Mono<CryptoReplenishmentSession> saveCryptoReplenishmentSession(@RequestBody CryptoReplenishmentSession cryptoReplenishmentSession){
+        return cryptoReplenishmentSessionRepository.save(cryptoReplenishmentSession);
+    }
+
+
 }

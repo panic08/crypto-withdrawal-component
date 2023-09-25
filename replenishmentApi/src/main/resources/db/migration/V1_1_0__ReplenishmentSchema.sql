@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS replenishments_table(
     id SERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    type VARCHAR(255) NOT NULL,
+    method VARCHAR(255) NOT NULL,
     currency VARCHAR(255) NOT NULL,
     amount DOUBLE PRECISION NOT NULL,
     created_at BIGINT NOT NULL

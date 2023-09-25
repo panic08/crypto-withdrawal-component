@@ -5,6 +5,7 @@
     <file type="web" url="file://$PROJECT_DIR$/auth" />
     <file type="web" url="file://$PROJECT_DIR$/replenishmentApi" />
     <file type="web" url="file://$PROJECT_DIR$/replenishmentCreate" />
+    <file type="web" url="file://$PROJECT_DIR$/replenishments" />
     <file type="web" url="file://$PROJECT_DIR$/userApi" />
   </component>
   <component name="NullableNotNullManager">

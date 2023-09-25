@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-from app.routers.crypto_router import router as crypto_router
+from app.router.crypto_router import router as crypto_router
 from fastapi.middleware.cors import CORSMiddleware
 app = FastAPI()
 

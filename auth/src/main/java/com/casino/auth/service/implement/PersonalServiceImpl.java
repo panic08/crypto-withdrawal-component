@@ -2,6 +2,7 @@ package com.casino.auth.service.implement;
 
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.exception.FileSizeExceedsLimitException;
+import com.casino.auth.exception.IncorrectTokenProvidedException;
 import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.InvalidFileExtensionException;
 import com.casino.auth.payload.*;
@@ -33,7 +34,7 @@ public class PersonalServiceImpl implements PersonalService {
     @Override
     public Mono<ChangeServerSeedResponse> changeServerSeed(String authorization) {
         return jwtUtil.extractId(authorization.split(" ")[1])
-                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(id -> {
                     String hex = HexGeneratorUtil.generateHex();
 
@@ -44,7 +45,7 @@ public class PersonalServiceImpl implements PersonalService {
     @Override
     public Mono<ChangeClientSeedResponse> changeClientSeed(String authorization, ChangeClientSeedRequest changeClientSeedRequest) {
         return jwtUtil.extractId(authorization.split(" ")[1])
-                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(id -> changeClientSeed(id,
                         changeClientSeedRequest.getClientSeed())
                         .thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
@@ -53,7 +54,7 @@ public class PersonalServiceImpl implements PersonalService {
     @Override
     public Mono<ChangeProfileTypeResponse> changeProfileType(String authorization, ChangeProfileTypeRequest changeProfileTypeRequest) {
         return jwtUtil.extractId(authorization.split(" ")[1])
-                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(id -> changeProfileType(id,
                         changeProfileTypeRequest.getProfileType())
                         .thenReturn(new ChangeProfileTypeResponse(changeProfileTypeRequest.getProfileType())));
@@ -61,7 +62,7 @@ public class PersonalServiceImpl implements PersonalService {
 
     public Mono<Void> changePhoto(String authorization, FilePart multipartFile) {
         return jwtUtil.extractId(authorization.split(" ")[1])
-                .onErrorResume(ex -> Mono.error(new InvalidCredentialsException("Incorrect token")))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(id -> {
 
                     long maxSizeBytes = 1024 * 1024;

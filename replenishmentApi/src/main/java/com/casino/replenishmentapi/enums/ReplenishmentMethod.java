@@ -1,6 +1,6 @@
 package com.casino.replenishmentapi.enums;
 
-public enum ReplenishmentType {
-    FIAT,
+public enum ReplenishmentMethod {
+    QIWI,
     CRYPTO
 }

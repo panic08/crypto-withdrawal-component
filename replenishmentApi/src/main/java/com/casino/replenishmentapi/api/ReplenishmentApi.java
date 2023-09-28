@@ -38,6 +38,17 @@ public class ReplenishmentApi {
                 .findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
     }
 
+    @GetMapping("/cryptoReplenishmentSession/existsCryptoReplenishmentSessionByUserIdAndCurrency")
+    public Mono<Boolean> existsByUserIdAndCurrency(
+            @RequestParam("userId") long userId,
+            @RequestParam("currency") CryptoReplenishmentSessionCurrency currency
+    ){
+        return cryptoReplenishmentSessionRepository
+                .findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency)
+                .map(cryptoReplenishmentSession -> true)
+                .defaultIfEmpty(false);
+    }
+
     @Transactional
     @PostMapping("/cryptoReplenishmentSession/save")
     public Mono<CryptoReplenishmentSession> saveCryptoReplenishmentSession(@RequestBody CryptoReplenishmentSession cryptoReplenishmentSession){

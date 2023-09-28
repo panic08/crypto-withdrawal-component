@@ -2,9 +2,10 @@ package com.casino.replenishments.controller;
 
 import com.casino.replenishments.enums.CryptoReplenishmentSessionCurrency;
 import com.casino.replenishments.model.CryptoReplenishmentSession;
-import com.casino.replenishments.payload.CryptoReplenishmentEthRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentBtcRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentEthRequest;
 import com.casino.replenishments.payload.CryptoReplenishmentResponse;
-import com.casino.replenishments.payload.CryptoReplenishmentTrxRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentTrxRequest;
 import com.casino.replenishments.service.implement.CryptoReplenishmentServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +34,11 @@ public class CryptoReplenishmentController {
     public Mono<CryptoReplenishmentResponse> createEth(@RequestHeader("Authorization") String authorization,
                                                        @Valid @RequestBody CryptoReplenishmentEthRequest cryptoReplenishmentEthRequest){
         return cryptoReplenishmentService.createEthCryptoReplenishment(authorization, cryptoReplenishmentEthRequest);
+    }
+
+    @PostMapping("/createBtc")
+    public Mono<CryptoReplenishmentResponse> createBtc(@RequestHeader("Authorization") String authorization,
+                                                       @Valid @RequestBody CryptoReplenishmentBtcRequest cryptoReplenishmentBtcRequest){
+        return cryptoReplenishmentService.createBtcCryptoReplenishment(authorization, cryptoReplenishmentBtcRequest);
     }
 }

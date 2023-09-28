@@ -2,9 +2,10 @@ package com.casino.replenishments.service;
 
 import com.casino.replenishments.enums.CryptoReplenishmentSessionCurrency;
 import com.casino.replenishments.model.CryptoReplenishmentSession;
-import com.casino.replenishments.payload.CryptoReplenishmentEthRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentBtcRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentEthRequest;
 import com.casino.replenishments.payload.CryptoReplenishmentResponse;
-import com.casino.replenishments.payload.CryptoReplenishmentTrxRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentTrxRequest;
 import reactor.core.publisher.Mono;
 
 public interface CryptoReplenishmentService {
@@ -16,4 +17,7 @@ public interface CryptoReplenishmentService {
 
     Mono<CryptoReplenishmentResponse> createEthCryptoReplenishment(String authorization,
                                                                    CryptoReplenishmentEthRequest cryptoReplenishmentEthRequest);
+
+    Mono<CryptoReplenishmentResponse> createBtcCryptoReplenishment(String authorization,
+                                                                   CryptoReplenishmentBtcRequest cryptoReplenishmentBtcRequest);
 }

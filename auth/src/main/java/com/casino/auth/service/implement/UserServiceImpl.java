@@ -1,9 +1,10 @@
 package com.casino.auth.service.implement;
 
 import com.casino.auth.dto.PublishUserDto;
-import com.casino.auth.dto.UserDto;
 import com.casino.auth.enums.UserDataProfileType;
+import com.casino.auth.property.ServicesIpProperty;
 import com.casino.auth.service.UserService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -22,10 +23,17 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final WebClient.Builder webClient;
+    private final ServicesIpProperty servicesIpProperty;
     private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
             "/srv/photos/" : "D:/photos/";
+    private static String FIND_USER_BY_ID_URL;
 
-    private static final String FIND_USER_BY_ID_URL = "http://localhost:8081/api/user/findUserById";
+    @PostConstruct
+    public void init() {
+        FIND_USER_BY_ID_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/findUserById";
+    }
 
     @Override
     public Mono<ResponseEntity<Resource>> getUserPhotoById(long id) {

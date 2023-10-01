@@ -6,6 +6,6 @@ public enum ReplenishmentCurrency {
     TRX,
     BTC,
     ETH,
-    TETHER_TRC20,
-    TETHER_ERC20
+    USDT_TRC20,
+    USDT_ERC20
 }

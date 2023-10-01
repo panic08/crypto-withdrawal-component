@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties("vk.oauth")
 @Getter
 @Setter
-public class VkOAuthProperties {
+public class VkOAuthProperty {
     private String clientId;
     private String clientSecret;
     private String redirectUrl;

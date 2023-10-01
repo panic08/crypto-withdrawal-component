@@ -1,4 +1,4 @@
-package com.casino.replenishments.enums;
+package com.casino.cryptoreplenishmentprocess.enums;
 
 public enum CryptoReplenishmentSessionCurrency {
     TRX,

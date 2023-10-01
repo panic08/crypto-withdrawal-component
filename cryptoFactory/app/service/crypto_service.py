@@ -1,9 +1,7 @@
 from tronpy.keys import PrivateKey
 from bitcoinlib.keys import Key, Address
-from eth_keys import keys
-from eth_utils import to_checksum_address
+from eth_account import Account
 from base58 import b58encode_check
-from os import urandom
 
 
 def generate_trx_data():
@@ -15,11 +13,13 @@ def generate_trx_data():
 
 
 def generate_eth_data():
-    private_key = keys.PrivateKey(urandom(32))
-    public_key = private_key.public_key
-    address = to_checksum_address(public_key.to_canonical_address())
+    account = Account.create()
 
-    return {"address": address, "private_key": private_key.to_hex(), "public_key": public_key.to_hex()}
+    private_key = account._private_key.hex()
+    public_key = account._key_obj.public_key.to_hex()
+    address = account.address
+
+    return {"address": address, "private_key": private_key, "public_key": public_key}
 
 
 def generate_btc_data():

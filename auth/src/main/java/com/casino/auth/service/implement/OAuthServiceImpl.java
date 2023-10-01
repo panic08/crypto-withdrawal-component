@@ -18,17 +18,20 @@ import com.casino.auth.model.UserData;
 import com.casino.auth.payload.AuthorizationResponse;
 import com.casino.auth.payload.google.GoogleAuthorizationRequest;
 import com.casino.auth.payload.vk.VkAuthorizationRequest;
-import com.casino.auth.property.GoogleOAuthProperties;
-import com.casino.auth.property.VkOAuthProperties;
+import com.casino.auth.property.GoogleOAuthProperty;
+import com.casino.auth.property.ServicesIpProperty;
+import com.casino.auth.property.VkOAuthProperty;
 import com.casino.auth.security.jwt.JwtUtil;
 import com.casino.auth.service.OAuthService;
 import com.casino.auth.util.HexGeneratorUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -36,10 +39,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -49,54 +55,58 @@ import java.util.Base64;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class OAuthServiceImpl implements OAuthService {
-    private static final String GET_VK_USER_URL = "https://api.vk.com/method/users.get";
-    private static final String  GET_GOOGLE_ACCESS_TOKEN_URL = "https://www.googleapis.com/oauth2/v4/token";
-    private static final String GET_VK_ACCESS_CODE_URL = "https://oauth.vk.com/access_token";
-    private static final String GET_GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
-    private static final String SAVE_USER_URL = "http://localhost:8081/api/user/save";
-    private static final String EXISTS_BY_USERNAME_URL = "http://localhost:8081/api/user/existsByUsername";
-    private static final String SAVE_USER_ACTIVITY_URL = "http://localhost:8081/api/userActivity/save";
-    private static final String SAVE_USER_DATA_URL = "http://localhost:8081/api/userData/save";
-    private static final String FIND_ORIGINAL_USER_BY_USERNAME_URL = "http://localhost:8081/api/user/findOriginalUserByUsername";
-    private final String OAUTH_REDIRECT_VK_URL;
-    private final String OAUTH_REDIRECT_GOOGLE_URL;
-    private final VkOAuthProperties vkOAuthProperties;
-    private final GoogleOAuthProperties googleOAuthProperties;
+    private final VkOAuthProperty vkOAuthProperty;
+    private final ServicesIpProperty servicesIpProperty;
+    private final GoogleOAuthProperty googleOAuthProperty;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final VkAuthorizationRequestToUserMapperImpl vkAuthorizationRequestToUserMapper;
     private final VkAuthorizationRequestToUserActivityMapperImpl vkAuthorizationRequestToUserActivityMapper;
     private final GoogleAuthorizationRequestToUserMapperImpl googleAuthorizationRequestToUserMapper;
     private final GoogleAuthorizationRequestToUserActivityMapperImpl googleAuthorizationRequestToUserActivityMapper;
+    private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
+            "/srv/photos/" : "D:/photos/";
+    private static final String GET_VK_USER_URL = "https://api.vk.com/method/users.get";
+    private static final String  GET_GOOGLE_ACCESS_TOKEN_URL = "https://www.googleapis.com/oauth2/v4/token";
+    private static final String GET_VK_ACCESS_CODE_URL = "https://oauth.vk.com/access_token";
+    private static final String GET_GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+    private static String SAVE_USER_URL;
+    private static String EXISTS_BY_USERNAME_URL;
+    private static  String SAVE_USER_ACTIVITY_URL;
+    private static  String SAVE_USER_DATA_URL;
+    private static  String FIND_ORIGINAL_USER_BY_USERNAME_URL;
+    private static  String OAUTH_REDIRECT_VK_URL;
+    private static  String OAUTH_REDIRECT_GOOGLE_URL;
 
-    @Autowired
-    public OAuthServiceImpl(VkOAuthProperties vkOAuthProperties,
-                            VkAuthorizationRequestToUserMapperImpl vkAuthorizationRequestToUserMapper,
-                            VkAuthorizationRequestToUserActivityMapperImpl vkAuthorizationRequestToUserActivityMapper,
-                            JwtUtil jwtUtil,
-                            BCryptPasswordEncoder bCryptPasswordEncoder,
-                            GoogleOAuthProperties googleOAuthProperties,
-                            GoogleAuthorizationRequestToUserMapperImpl googleAuthorizationRequestToUserMapper,
-                            GoogleAuthorizationRequestToUserActivityMapperImpl googleAuthorizationRequestToUserActivityMapper
-                            ) {
-        this.vkOAuthProperties = vkOAuthProperties;
-        this.vkAuthorizationRequestToUserMapper  = vkAuthorizationRequestToUserMapper;
-        this.googleAuthorizationRequestToUserMapper = googleAuthorizationRequestToUserMapper;
-        this.vkAuthorizationRequestToUserActivityMapper = vkAuthorizationRequestToUserActivityMapper;
-        this.jwtUtil = jwtUtil;
-        this.bCryptPasswordEncoder = bCryptPasswordEncoder;
-        this.googleOAuthProperties = googleOAuthProperties;
-        this.googleAuthorizationRequestToUserActivityMapper = googleAuthorizationRequestToUserActivityMapper;
-        this.OAUTH_REDIRECT_VK_URL = "https://oauth.vk.com/authorize?client_id="
-                + vkOAuthProperties.getClientId() + "&display=page&redirect_uri="
-                + vkOAuthProperties.getRedirectUrl() + "&scope="
-                + vkOAuthProperties.getScopes() + "&response_type=code&v=5.131&state=123456";
-        this.OAUTH_REDIRECT_GOOGLE_URL = "https://accounts.google.com/o/oauth2/auth?client_id="
-                + googleOAuthProperties.getClientId() + "&redirect_uri="
-                + googleOAuthProperties.getRedirectUrl() + "&scope="
-                + googleOAuthProperties.getScopes() + "&response_type=code";
+    @PostConstruct
+    public void init() {
+        OAUTH_REDIRECT_VK_URL = "https://oauth.vk.com/authorize?client_id="
+                + vkOAuthProperty.getClientId() + "&display=page&redirect_uri="
+                + vkOAuthProperty.getRedirectUrl() + "&scope="
+                + vkOAuthProperty.getScopes() + "&response_type=code&v=5.131&state=123456";
+        OAUTH_REDIRECT_GOOGLE_URL = "https://accounts.google.com/o/oauth2/auth?client_id="
+                + googleOAuthProperty.getClientId() + "&redirect_uri="
+                + googleOAuthProperty.getRedirectUrl() + "&scope="
+                + googleOAuthProperty.getScopes() + "&response_type=code";
+        EXISTS_BY_USERNAME_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/existsByUsername";
+        SAVE_USER_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/save";
+        SAVE_USER_ACTIVITY_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userActivity/save";
+        SAVE_USER_DATA_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userData/save";
+        FIND_ORIGINAL_USER_BY_USERNAME_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/findOriginalUserByUsername";
     }
+
     @Override
     public Mono<AuthorizationResponse> handleAuthorizeByVk(VkAuthorizationRequest vkAuthorizationRequest) {
         return getVKAccessTokenByCode(vkAuthorizationRequest.getCode())
@@ -130,6 +140,24 @@ public class OAuthServiceImpl implements OAuthService {
                                     return saveUser(user)
                                             .flatMap(savedUser -> {
                                                 long userId = savedUser.getId();
+                                                WebClient.Builder webClient = WebClient.builder();
+
+                                                Mono<Void> downloadPhoto = webClient
+                                                        .baseUrl(vkUserDto.getResponse()[0].getPhotoMax())
+                                                        .build()
+                                                        .get()
+                                                        .accept(MediaType.APPLICATION_OCTET_STREAM)
+                                                        .retrieve()
+                                                        .bodyToMono(byte[].class)
+                                                        .flatMap(imageBytes -> {
+                                                            String filePath = Paths.get(UPLOAD_DIR, userId + ".jpg").toString();
+                                                            try {
+                                                                Files.write(Paths.get(filePath), imageBytes);
+                                                                return Mono.empty();
+                                                            } catch (IOException e) {
+                                                                return Mono.error(e);
+                                                            }
+                                                        });
 
                                                 String nickname = vkUserDto.getResponse()[0].getFirstName()
                                                         + " "
@@ -153,9 +181,10 @@ public class OAuthServiceImpl implements OAuthService {
                                                         HexGeneratorUtil.generateHex()
                                                 );
 
-                                                return Mono.zip(
+                                                return Mono.when(
                                                                 saveUserActivity(userActivity),
-                                                                saveUserData(userData)
+                                                                saveUserData(userData),
+                                                                downloadPhoto
                                                         )
                                                         .then(jwtUtil.generateToken(savedUser).map(AuthorizationResponse::new));
                                             });
@@ -169,9 +198,9 @@ public class OAuthServiceImpl implements OAuthService {
         Mono<GoogleAccessTokenDto> googleAccessTokenDtoMono =
                 getGoogleAccessTokenDtoByGoogleAccessTokenRequest(
                         new GoogleAccessTokenRequest(
-                                googleOAuthProperties.getClientId(),
-                                googleOAuthProperties.getClientSecret(),
-                                googleOAuthProperties.getRedirectUrl(),
+                                googleOAuthProperty.getClientId(),
+                                googleOAuthProperty.getClientSecret(),
+                                googleOAuthProperty.getRedirectUrl(),
                                 URLDecoder.decode(googleAuthorizationRequest.getCode(), StandardCharsets.UTF_8),
                                 "authorization_code"
                         )
@@ -260,6 +289,24 @@ public class OAuthServiceImpl implements OAuthService {
                                     return saveUser(user)
                                             .flatMap(savedUser -> {
                                                 long userId = savedUser.getId();
+                                                WebClient.Builder webClient = WebClient.builder();
+
+                                                Mono<Void> downloadPhoto = webClient
+                                                        .baseUrl(claims.get("picture", String.class))
+                                                        .build()
+                                                        .get()
+                                                        .accept(MediaType.APPLICATION_OCTET_STREAM)
+                                                        .retrieve()
+                                                        .bodyToMono(byte[].class)
+                                                        .flatMap(imageBytes -> {
+                                                            String filePath = Paths.get(UPLOAD_DIR, userId + ".jpg").toString();
+                                                            try {
+                                                                Files.write(Paths.get(filePath), imageBytes);
+                                                                return Mono.empty();
+                                                            } catch (IOException e) {
+                                                                return Mono.error(e);
+                                                            }
+                                                        });
 
                                                 UserActivity userActivity =
                                                         googleAuthorizationRequestToUserActivityMapper
@@ -279,7 +326,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                         HexGeneratorUtil.generateHex()
                                                 );
 
-                                                return Mono.zip(saveUserActivity(userActivity), saveUserData(userData))
+                                                return Mono.when(saveUserActivity(userActivity), saveUserData(userData), downloadPhoto)
                                                         .then(jwtUtil.generateToken(savedUser).map(AuthorizationResponse::new));
                                             });
                                 }
@@ -314,9 +361,9 @@ public class OAuthServiceImpl implements OAuthService {
         WebClient.Builder webClient = WebClient.builder();
         return webClient
                 .baseUrl(GET_VK_ACCESS_CODE_URL + "?client_id="
-                        + vkOAuthProperties.getClientId()
-                        + "&client_secret=" + vkOAuthProperties.getClientSecret()
-                        + "&redirect_uri=" + vkOAuthProperties.getRedirectUrl()
+                        + vkOAuthProperty.getClientId()
+                        + "&client_secret=" + vkOAuthProperty.getClientSecret()
+                        + "&redirect_uri=" + vkOAuthProperty.getRedirectUrl()
                         + "&code=" + code
                 )
                 .build()
@@ -406,4 +453,5 @@ public class OAuthServiceImpl implements OAuthService {
                 .retrieve()
                 .bodyToMono(Boolean.class);
     }
+
 }

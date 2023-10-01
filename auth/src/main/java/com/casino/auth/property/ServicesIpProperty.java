@@ -6,12 +6,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("google.oauth")
+@ConfigurationProperties("com.casino.services.ip")
 @Getter
 @Setter
-public class GoogleOAuthProperties {
-    private String clientId;
-    private String clientSecret;
-    private String redirectUrl;
-    private String scopes;
+public class ServicesIpProperty {
+    private String userApiIp;
 }

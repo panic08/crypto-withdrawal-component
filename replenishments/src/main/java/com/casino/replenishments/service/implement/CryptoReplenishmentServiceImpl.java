@@ -13,8 +13,11 @@ import com.casino.replenishments.payload.children.CryptoReplenishmentBtcRequest;
 import com.casino.replenishments.payload.children.CryptoReplenishmentEthRequest;
 import com.casino.replenishments.payload.CryptoReplenishmentResponse;
 import com.casino.replenishments.payload.children.CryptoReplenishmentTrxRequest;
+import com.casino.replenishments.payload.children.CryptoReplenishmentUsdtRequest;
+import com.casino.replenishments.property.ServicesIpProperty;
 import com.casino.replenishments.service.CryptoReplenishmentService;
 import com.casino.replenishments.util.NumberFormatterUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
@@ -26,24 +29,59 @@ import reactor.core.publisher.Mono;
 public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentService {
 
     private final WebClient.Builder webClient;
+    private final ServicesIpProperty servicesIpProperty;
     private final KafkaTemplate<String, CryptoReplenishmentMessage> kafkaTemplate;
     private final CryptoReplenishmentRequestToCryptoReplenishmentMessageMapperImpl cryptoReplenishmentRequestToCryptoReplenishmentMessageMapper;
     private final CryptoReplenishmentMessageToCryptoReplenishmentResponseMapperImpl cryptoReplenishmentMessageToCryptoReplenishmentResponseMapper;
-    private static final String FIND_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL =
-            "http://localhost:8083/api/cryptoReplenishmentSession/findCryptoReplenishmentSessionByUserIdAndCurrency";
+    private static String FIND_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL;
+    private static String DELETE_CRYPTO_REPLENISHMENT_SESSION_URL;
     private static final String CRYPTO_REPLENISHMENT_TOPIC = "crypto-replenishment-topic";
-    private static final String GET_INFO_BY_TOKEN_URL = "http://localhost:8080/api/auth/getInfoByToken";
-    private static final String EXISTS_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL = "http://localhost:8083/api/cryptoReplenishmentSession/existsCryptoReplenishmentSessionByUserIdAndCurrency";
-    private static final String GET_TRX_GENERATE_CRYPTO_DATA_URL = "http://localhost:8082/api/crypto/trx/generate_data";
-    private static final String GET_ETH_GENERATE_CRYPTO_DATA_URL = "http://localhost:8082/api/crypto/eth/generate_data";
-    private static final String GET_BTC_GENERATE_CRYPTO_DATA_URL = "http://localhost:8082/api/crypto/btc/generate_data";
-    private static final String SAVE_CRYPTO_REPLENISHMENT_SESSION_URL = "http://localhost:8083/api/cryptoReplenishmentSession/save";
+    private static String GET_INFO_BY_TOKEN_URL;
+    private static String EXISTS_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL;
+    private static String GET_TRX_GENERATED_CRYPTO_DATA_URL;
+    private static String GET_ETH_GENERATED_CRYPTO_DATA_URL;
+    private static String GET_BTC_GENERATED_CRYPTO_DATA_URL;
+    private static String SAVE_CRYPTO_REPLENISHMENT_SESSION_URL;
+    @PostConstruct
+    public void init() {
+        FIND_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL = "http://"
+                + servicesIpProperty.getReplenishmentApiIp()
+                + ":8083/api/cryptoReplenishmentSession/findCryptoReplenishmentSessionByUserIdAndCurrency";
+        DELETE_CRYPTO_REPLENISHMENT_SESSION_URL = "http://"
+                + servicesIpProperty.getReplenishmentApiIp()
+                + ":8083/api/cryptoReplenishmentSession/deleteByUserIdAndCurrency";
+        GET_INFO_BY_TOKEN_URL = "http://"
+                + servicesIpProperty.getAuthIp()
+                + ":8080/api/auth/getInfoByToken";
+        EXISTS_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL = "http://"
+                + servicesIpProperty.getReplenishmentApiIp()
+                + ":8083/api/cryptoReplenishmentSession/existsCryptoReplenishmentSessionByUserIdAndCurrency";
+        GET_TRX_GENERATED_CRYPTO_DATA_URL = "http://"
+                + servicesIpProperty.getCryptoFactoryIp()
+                + ":8082/api/crypto/trx/generate_data";
+        GET_BTC_GENERATED_CRYPTO_DATA_URL = "http://"
+                + servicesIpProperty.getCryptoFactoryIp()
+                + ":8082/api/crypto/btc/generate_data";
+        GET_ETH_GENERATED_CRYPTO_DATA_URL = "http://"
+                + servicesIpProperty.getCryptoFactoryIp()
+                + ":8082/api/crypto/eth/generate_data";
+        SAVE_CRYPTO_REPLENISHMENT_SESSION_URL = "http://"
+                + servicesIpProperty.getReplenishmentApiIp()
+                + ":8083/api/cryptoReplenishmentSession/save";
+    }
 
     @Override
     public Mono<CryptoReplenishmentSession> getCryptoReplenishmentSession(String authorization, CryptoReplenishmentSessionCurrency currency) {
         return getInfoByToken(authorization.split(" ")[1])
                 .onErrorResume(err -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(user -> findCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), currency));
+    }
+
+    @Override
+    public Mono<Void> deleteCryptoReplenishmentSession(String authorization, CryptoReplenishmentSessionCurrency currency) {
+        return getInfoByToken(authorization.split(" ")[1])
+                .onErrorResume(err -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
+                .flatMap(user -> deleteCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), currency));
     }
 
     @Override
@@ -55,7 +93,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.TRX))
                 .filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new CryptoReplenishmentExistsException("Complete previous crypto-replenishment")))
-                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_TRX_GENERATE_CRYPTO_DATA_URL))
+                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_TRX_GENERATED_CRYPTO_DATA_URL))
                         .flatMap(tuple -> {
                             CryptoReplenishmentSession cryptoReplenishmentSession = new CryptoReplenishmentSession();
 
@@ -98,7 +136,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.ETH))
                 .filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new CryptoReplenishmentExistsException("Complete previous crypto-replenishment")))
-                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_ETH_GENERATE_CRYPTO_DATA_URL))
+                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_ETH_GENERATED_CRYPTO_DATA_URL))
                         .flatMap(tuple -> {
                             CryptoReplenishmentSession cryptoReplenishmentSession = new CryptoReplenishmentSession();
 
@@ -141,7 +179,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.BTC))
                 .filter(aBoolean -> !aBoolean)
                 .switchIfEmpty(Mono.error(new CryptoReplenishmentExistsException("Complete previous crypto-replenishment")))
-                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_BTC_GENERATE_CRYPTO_DATA_URL))
+                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_BTC_GENERATED_CRYPTO_DATA_URL))
                         .flatMap(tuple -> {
                             CryptoReplenishmentSession cryptoReplenishmentSession = new CryptoReplenishmentSession();
 
@@ -175,6 +213,92 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                         }));
     }
 
+    @Override
+    public Mono<CryptoReplenishmentResponse> createUsdtTrc20CryptoReplenishment(String authorization, CryptoReplenishmentUsdtRequest cryptoReplenishmentUsdtRequest) {
+        Mono<User> userMono = getInfoByToken(authorization.split(" ")[1])
+                .onErrorResume(err -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")));
+
+        return userMono
+                .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.USDT_TRC20))
+                .filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new CryptoReplenishmentExistsException("Complete previous crypto-replenishment")))
+                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_TRX_GENERATED_CRYPTO_DATA_URL))
+                        .flatMap(tuple -> {
+                            CryptoReplenishmentSession cryptoReplenishmentSession = new CryptoReplenishmentSession();
+
+                            cryptoReplenishmentSession.setUserId(tuple.getT1().getId());
+                            cryptoReplenishmentSession.setRecipientAddress(tuple.getT2().getAddress());
+                            cryptoReplenishmentSession.setAmount(NumberFormatterUtil.formatDouble(cryptoReplenishmentUsdtRequest.getAmount(), 2));
+                            cryptoReplenishmentSession.setCurrency(CryptoReplenishmentSessionCurrency.USDT_TRC20);
+                            cryptoReplenishmentSession.setUntilTimestamp(System.currentTimeMillis() + (15 * 60 * 1000));
+
+                            return saveCryptoReplenishmentSession(cryptoReplenishmentSession)
+                                    .map(cryptoReplenishmentSession1 -> {
+                                        CryptoReplenishmentMessage cryptoReplenishmentMessage =
+                                                cryptoReplenishmentRequestToCryptoReplenishmentMessageMapper
+                                                        .cryptoReplenishmentRequestToCryptoReplenishmentMessage(cryptoReplenishmentUsdtRequest);
+
+                                        cryptoReplenishmentMessage.setAmount(cryptoReplenishmentSession.getAmount());
+                                        cryptoReplenishmentMessage.setCurrency(CryptoReplenishmentSessionCurrency.USDT_TRC20);
+
+                                        cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
+                                        cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
+                                        cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
+                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
+                                        cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
+                                        cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
+
+                                        kafkaTemplate.send(CRYPTO_REPLENISHMENT_TOPIC, cryptoReplenishmentMessage);
+
+                                        return cryptoReplenishmentMessageToCryptoReplenishmentResponseMapper
+                                                .cryptoReplenishmentMessageToCryptoReplenishmentResponse(cryptoReplenishmentMessage);
+                                    });
+                        }));
+    }
+
+    @Override
+    public Mono<CryptoReplenishmentResponse> createUsdtErc20CryptoReplenishment(String authorization, CryptoReplenishmentUsdtRequest cryptoReplenishmentUsdtRequest) {
+        Mono<User> userMono = getInfoByToken(authorization.split(" ")[1])
+                .onErrorResume(err -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")));
+
+        return userMono
+                .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.USDT_ERC20))
+                .filter(aBoolean -> !aBoolean)
+                .switchIfEmpty(Mono.error(new CryptoReplenishmentExistsException("Complete previous crypto-replenishment")))
+                .flatMap(cryptoReplenishmentSession22 -> Mono.zip(userMono, generateCryptoData(GET_ETH_GENERATED_CRYPTO_DATA_URL))
+                        .flatMap(tuple -> {
+                            CryptoReplenishmentSession cryptoReplenishmentSession = new CryptoReplenishmentSession();
+
+                            cryptoReplenishmentSession.setUserId(tuple.getT1().getId());
+                            cryptoReplenishmentSession.setRecipientAddress(tuple.getT2().getAddress());
+                            cryptoReplenishmentSession.setAmount(NumberFormatterUtil.formatDouble(cryptoReplenishmentUsdtRequest.getAmount(), 2));
+                            cryptoReplenishmentSession.setCurrency(CryptoReplenishmentSessionCurrency.USDT_ERC20);
+                            cryptoReplenishmentSession.setUntilTimestamp(System.currentTimeMillis() + (15 * 60 * 1000));
+
+                            return saveCryptoReplenishmentSession(cryptoReplenishmentSession)
+                                    .map(cryptoReplenishmentSession1 -> {
+                                        CryptoReplenishmentMessage cryptoReplenishmentMessage =
+                                                cryptoReplenishmentRequestToCryptoReplenishmentMessageMapper
+                                                        .cryptoReplenishmentRequestToCryptoReplenishmentMessage(cryptoReplenishmentUsdtRequest);
+
+                                        cryptoReplenishmentMessage.setAmount(cryptoReplenishmentSession.getAmount());
+                                        cryptoReplenishmentMessage.setCurrency(CryptoReplenishmentSessionCurrency.USDT_ERC20);
+
+                                        cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
+                                        cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
+                                        cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
+                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
+                                        cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
+                                        cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
+
+                                        kafkaTemplate.send(CRYPTO_REPLENISHMENT_TOPIC, cryptoReplenishmentMessage);
+
+                                        return cryptoReplenishmentMessageToCryptoReplenishmentResponseMapper
+                                                .cryptoReplenishmentMessageToCryptoReplenishmentResponse(cryptoReplenishmentMessage);
+                                    });
+                        }));
+    }
+
     private Mono<User> getInfoByToken(String token){
         return webClient.baseUrl(GET_INFO_BY_TOKEN_URL + "?token=" + token)
                 .build()
@@ -189,6 +313,15 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                 .get()
                 .retrieve()
                 .bodyToMono(CryptoDataDto.class);
+    }
+    private Mono<Void> deleteCryptoReplenishmentSessionByUserIdAndCurrency(long userId,
+                                                                           CryptoReplenishmentSessionCurrency currency){
+        return webClient.baseUrl(DELETE_CRYPTO_REPLENISHMENT_SESSION_URL + "?userId=" + userId
+                + "&currency=" + currency)
+                .build()
+                .delete()
+                .retrieve()
+                .bodyToMono(Void.class);
     }
 
     private Mono<CryptoReplenishmentSession> saveCryptoReplenishmentSession(CryptoReplenishmentSession cryptoReplenishmentSession){

@@ -17,7 +17,7 @@ public class PersonalController {
 
     @PutMapping (value = "/photo/upload", consumes = "multipart/form-data")
     public Mono<Void> changePhoto(@RequestHeader("Authorization") String authorization,
-                                                    @RequestPart("photo") FilePart multipartFile){
+                                  @RequestPart("photo") FilePart multipartFile){
         return personalService.changePhoto(authorization, multipartFile);
     }
 
@@ -26,6 +26,7 @@ public class PersonalController {
         return personalService.changeServerSeed(authorization);
     }
 
+    //maybe Patch idk
     @PutMapping("/changeClientSeed")
     public Mono<ChangeClientSeedResponse> changeServerSeed(@RequestHeader("Authorization") String authorization,
                                                            @Valid @RequestBody ChangeClientSeedRequest changeClientSeedRequest){
@@ -34,8 +35,7 @@ public class PersonalController {
 
     @PutMapping("/changeProfileType")
     public Mono<ChangeProfileTypeResponse> changeProfileType(@RequestHeader("Authorization") String authorization,
-                                                             @RequestBody ChangeProfileTypeRequest changeProfileTypeRequest
-                                                            ){
+                                                             @RequestBody ChangeProfileTypeRequest changeProfileTypeRequest){
         return personalService.changeProfileType(authorization, changeProfileTypeRequest);
     }
 }

@@ -3,7 +3,9 @@ package com.casino.replenishments.service.implement;
 import com.casino.replenishments.exception.IncorrectTokenProvidedException;
 import com.casino.replenishments.model.Replenishment;
 import com.casino.replenishments.model.User;
+import com.casino.replenishments.property.ServicesIpProperty;
 import com.casino.replenishments.service.ReplenishmentService;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,8 +17,19 @@ import reactor.core.publisher.Mono;
 public class ReplenishmentServiceImpl implements ReplenishmentService {
 
     private final WebClient.Builder webClient;
-    private static final String FIND_ALL_ORIGINAL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL = "http://localhost:8083/api/replenishment/findAllOriginalReplenishmentByIdWithLimit";
-    private static final String GET_INFO_BY_TOKEN_URL = "http://localhost:8080/api/auth/getInfoByToken";
+    private final ServicesIpProperty servicesIpProperty;
+    private static String FIND_ALL_ORIGINAL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL;
+    private static String GET_INFO_BY_TOKEN_URL;
+
+    @PostConstruct
+    public void init() {
+        FIND_ALL_ORIGINAL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL = "http://"
+                + servicesIpProperty.getReplenishmentApiIp()
+                + ":8083/api/replenishment/findAllOriginalReplenishmentByIdWithLimit";
+        GET_INFO_BY_TOKEN_URL = "http://"
+                + servicesIpProperty.getAuthIp()
+                + ":8080/api/auth/getInfoByToken";
+    }
 
     @Override
     public Flux<Replenishment> getAllReplenishment(String authorization, int startIndex, int endIndex) {

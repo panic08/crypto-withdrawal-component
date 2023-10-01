@@ -55,5 +55,11 @@ public class ReplenishmentApi {
         return cryptoReplenishmentSessionRepository.save(cryptoReplenishmentSession);
     }
 
+    @Transactional
+    @DeleteMapping("/cryptoReplenishmentSession/deleteByUserIdAndCurrency")
+    public Mono<Void> deleteCryptoReplenishmentSessionById(@RequestParam("userId") long userId,
+                                                           @RequestParam("currency") CryptoReplenishmentSessionCurrency currency){
+        return cryptoReplenishmentSessionRepository.deleteCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
+    }
 
 }

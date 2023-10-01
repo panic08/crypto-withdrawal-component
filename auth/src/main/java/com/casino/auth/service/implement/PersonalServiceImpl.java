@@ -3,12 +3,13 @@ package com.casino.auth.service.implement;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.exception.FileSizeExceedsLimitException;
 import com.casino.auth.exception.IncorrectTokenProvidedException;
-import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.InvalidFileExtensionException;
 import com.casino.auth.payload.*;
+import com.casino.auth.property.ServicesIpProperty;
 import com.casino.auth.security.jwt.JwtUtil;
 import com.casino.auth.service.PersonalService;
 import com.casino.auth.util.HexGeneratorUtil;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -25,11 +26,25 @@ public class PersonalServiceImpl implements PersonalService {
 
     private final WebClient.Builder webClient;
     private final JwtUtil jwtUtil;
+    private final ServicesIpProperty servicesIpProperty;
     private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
             "/srv/photos/" : "D:/photos/";
-    private static final String UPDATE_SERVER_SEED_BY_USERID = "http://localhost:8081/api/userData/updateServerSeedByUserId";
-    private static final String UPDATE_CLIENT_SEED_BY_USERID = "http://localhost:8081/api/userData/updateClientSeedByUserId";
-    private static final String UPDATE_PROFILE_TYPE_BY_USERID = "http://localhost:8081/api/userData/updateProfileTypeByUserId";
+    private static String UPDATE_SERVER_SEED_BY_USERID;
+    private static String UPDATE_CLIENT_SEED_BY_USERID;
+    private static String UPDATE_PROFILE_TYPE_BY_USERID;
+
+    @PostConstruct
+    public void init() {
+        UPDATE_SERVER_SEED_BY_USERID = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userData/updateServerSeedByUserId";
+        UPDATE_CLIENT_SEED_BY_USERID = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userData/updateClientSeedByUserId";
+        UPDATE_PROFILE_TYPE_BY_USERID = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userData/updateProfileTypeByUserId";
+    }
 
     @Override
     public Mono<ChangeServerSeedResponse> changeServerSeed(String authorization) {

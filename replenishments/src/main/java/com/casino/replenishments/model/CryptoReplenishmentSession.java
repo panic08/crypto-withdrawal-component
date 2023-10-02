@@ -8,7 +8,6 @@ import lombok.Data;
 @Data
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CryptoReplenishmentSession {
-    private Long id;
     private Long userId;
     private String recipientAddress;
     private Double amount;

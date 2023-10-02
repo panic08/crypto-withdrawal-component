@@ -24,6 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentService {
@@ -49,7 +51,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                 + ":8083/api/cryptoReplenishmentSession/findCryptoReplenishmentSessionByUserIdAndCurrency";
         DELETE_CRYPTO_REPLENISHMENT_SESSION_URL = "http://"
                 + servicesIpProperty.getReplenishmentApiIp()
-                + ":8083/api/cryptoReplenishmentSession/deleteByUserIdAndCurrency";
+                + ":8083/api/cryptoReplenishmentSession/deleteCryptoReplenishmentSessionByUserIdAndCurrency";
         GET_INFO_BY_TOKEN_URL = "http://"
                 + servicesIpProperty.getAuthIp()
                 + ":8080/api/auth/getInfoByToken";
@@ -115,7 +117,6 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                                         cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
                                         cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
                                         cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
-                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
                                         cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
                                         cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
 
@@ -158,7 +159,6 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                                         cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
                                         cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
                                         cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
-                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
                                         cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
                                         cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
 
@@ -201,7 +201,6 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                                         cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
                                         cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
                                         cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
-                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
                                         cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
                                         cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
 
@@ -244,7 +243,6 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                                         cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
                                         cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
                                         cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
-                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
                                         cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
                                         cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
 
@@ -287,7 +285,6 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                                         cryptoReplenishmentMessage.setRecipientAddress(tuple.getT2().getAddress());
                                         cryptoReplenishmentMessage.setRecipientPrivateKey(tuple.getT2().getPrivateKey());
                                         cryptoReplenishmentMessage.setRecipientPublicKey(tuple.getT2().getPublicKey());
-                                        cryptoReplenishmentMessage.setId(cryptoReplenishmentSession1.getId());
                                         cryptoReplenishmentMessage.setUserId(tuple.getT1().getId());
                                         cryptoReplenishmentMessage.setUntilTimestamp(cryptoReplenishmentSession1.getUntilTimestamp());
 

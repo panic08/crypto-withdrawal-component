@@ -5,6 +5,7 @@ import com.casino.replenishmentapi.model.CryptoReplenishmentSession;
 import com.casino.replenishmentapi.model.Replenishment;
 import com.casino.replenishmentapi.repository.CryptoReplenishmentSessionRepository;
 import com.casino.replenishmentapi.repository.ReplenishmentRepository;
+import com.casino.replenishmentapi.repository.implement.CryptoReplenishmentSessionRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +19,7 @@ import reactor.core.publisher.Mono;
 public class ReplenishmentApi {
 
     private final ReplenishmentRepository replenishmentRepository;
-    private final CryptoReplenishmentSessionRepository cryptoReplenishmentSessionRepository;
+    private final CryptoReplenishmentSessionRepositoryImpl cryptoReplenishmentSessionRepository;
 
     @GetMapping("/replenishment/findAllOriginalReplenishmentByIdWithLimit")
     public Flux<Replenishment> findAllOriginalReplenishmentWithLimit(
@@ -49,15 +50,13 @@ public class ReplenishmentApi {
                 .defaultIfEmpty(false);
     }
 
-    @Transactional
     @PostMapping("/cryptoReplenishmentSession/save")
     public Mono<CryptoReplenishmentSession> saveCryptoReplenishmentSession(@RequestBody CryptoReplenishmentSession cryptoReplenishmentSession){
         return cryptoReplenishmentSessionRepository.save(cryptoReplenishmentSession);
     }
 
-    @Transactional
-    @DeleteMapping("/cryptoReplenishmentSession/deleteByUserIdAndCurrency")
-    public Mono<Void> deleteCryptoReplenishmentSessionById(@RequestParam("userId") long userId,
+    @DeleteMapping("/cryptoReplenishmentSession/deleteCryptoReplenishmentSessionByUserIdAndCurrency")
+    public Mono<Boolean> deleteCryptoReplenishmentSessionById(@RequestParam("userId") long userId,
                                                            @RequestParam("currency") CryptoReplenishmentSessionCurrency currency){
         return cryptoReplenishmentSessionRepository.deleteCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
     }

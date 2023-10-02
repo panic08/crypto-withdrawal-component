@@ -9,7 +9,6 @@ import org.mapstruct.Mappings;
 @Mapper(componentModel = "spring")
 public interface CryptoReplenishmentRequestToCryptoReplenishmentMessageMapper {
     @Mappings({
-            @Mapping(ignore = true, target = "id"),
             @Mapping(ignore = true, target = "userId"),
             @Mapping(ignore = true, target = "recipientAddress"),
             @Mapping(ignore = true, target = "recipientPrivateKey"),

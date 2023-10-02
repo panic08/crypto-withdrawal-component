@@ -11,7 +11,6 @@ import lombok.Setter;
 @Setter
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CryptoReplenishmentMessage {
-    private Long id;
     private Long userId;
     private String recipientAddress;
     private String recipientPrivateKey;

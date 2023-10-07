@@ -12,7 +12,6 @@ public interface CryptoReplenishmentRequestToCryptoReplenishmentMessageMapper {
             @Mapping(ignore = true, target = "userId"),
             @Mapping(ignore = true, target = "recipientAddress"),
             @Mapping(ignore = true, target = "recipientPrivateKey"),
-            @Mapping(ignore = true, target = "recipientPublicKey"),
             @Mapping(source = "data.ipAddress", target = "data.ipAddress"),
             @Mapping(source = "data.browserName", target = "data.browserName"),
             @Mapping(source = "data.operatingSystem", target = "data.operatingSystem"),

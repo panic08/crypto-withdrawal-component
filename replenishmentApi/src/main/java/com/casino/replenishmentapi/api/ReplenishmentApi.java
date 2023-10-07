@@ -1,8 +1,11 @@
 package com.casino.replenishmentapi.api;
 
+import com.casino.replenishmentapi.enums.CryptoDataCurrency;
 import com.casino.replenishmentapi.enums.CryptoReplenishmentSessionCurrency;
+import com.casino.replenishmentapi.model.CryptoData;
 import com.casino.replenishmentapi.model.CryptoReplenishmentSession;
 import com.casino.replenishmentapi.model.Replenishment;
+import com.casino.replenishmentapi.repository.CryptoDataRepository;
 import com.casino.replenishmentapi.repository.CryptoReplenishmentSessionRepository;
 import com.casino.replenishmentapi.repository.ReplenishmentRepository;
 import com.casino.replenishmentapi.repository.implement.CryptoReplenishmentSessionRepositoryImpl;
@@ -19,6 +22,7 @@ import reactor.core.publisher.Mono;
 public class ReplenishmentApi {
 
     private final ReplenishmentRepository replenishmentRepository;
+    private final CryptoDataRepository cryptoDataRepository;
     private final CryptoReplenishmentSessionRepositoryImpl cryptoReplenishmentSessionRepository;
 
     @GetMapping("/replenishment/findAllOriginalReplenishmentByIdWithLimit")
@@ -48,6 +52,16 @@ public class ReplenishmentApi {
                 .findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency)
                 .map(cryptoReplenishmentSession -> true)
                 .defaultIfEmpty(false);
+    }
+
+    @GetMapping("/cryptoData/findAllCryptoDataByCurrency")
+    public Flux<CryptoData> findAllCryptoDataByCurrency(@RequestParam("currency") CryptoDataCurrency currency){
+        return cryptoDataRepository.findAllCryptoDataByCurrency(currency);
+    }
+
+    @PostMapping("/replenishment/save")
+    public Mono<Replenishment> saveReplenishment(@RequestBody Replenishment replenishment){
+        return replenishmentRepository.save(replenishment);
     }
 
     @PostMapping("/cryptoReplenishmentSession/save")

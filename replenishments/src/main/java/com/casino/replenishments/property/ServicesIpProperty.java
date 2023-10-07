@@ -12,6 +12,5 @@ import org.springframework.stereotype.Component;
 public class ServicesIpProperty {
     private String userApiIp;
     private String authIp;
-    private String cryptoFactoryIp;
     private String replenishmentApiIp;
 }

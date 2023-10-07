@@ -1,6 +1,6 @@
 package com.example.userapi.enums;
 
-public enum UserDataRole {
+public enum UserRole {
     DEFAULT,
     ADMIN
 }

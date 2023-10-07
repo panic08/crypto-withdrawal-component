@@ -7,7 +7,6 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import reactor.core.publisher.Mono;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -18,38 +17,55 @@ import java.util.function.Function;
 public class JwtUtil {
     @Value("${spring.security.jwt.secret}")
     private String jwtSecret;
+    @Value("${spring.security.refresh.secret}")
+    private String refreshSecret;
 
-    public Mono<String> generateToken(User user){
+    public String generateAccessToken(User user){
         Map<String, Object> claims = new HashMap<>();
 
         claims.put("name", user.getUsername());
+        claims.put("registered_at", user.getRegisteredAt());
+        claims.put("account_non_locked", user.getIsAccountNonLocked());
+        claims.put("role", user.getRole());
 
-        return Mono.defer(() -> createToken(claims, user.getId()));
+        return createAccessToken(claims, user.getId());
     }
 
-    public Mono<Date> extractExpiration(String token){
-        return extractClaim(token, Claims::getExpiration);
+    public String generateRefreshToken(User user){
+        Map<String, Object> claims = new HashMap<>();
+
+        return createRefreshToken(claims, user.getId());
     }
 
-    public Mono<Long> extractId(String token){
-        return extractClaim(token, claims -> Long.parseLong(claims.getSubject()));
+    public Long extractIdFromAccessToken(String token){
+        return extractAccessClaim(token, claims -> Long.parseLong(claims.getSubject()));
     }
 
-
-    private Mono<Claims> extractAllClaims(String token) {
-        return Mono.fromCallable(() ->
-                Jwts.parserBuilder().setSigningKey(jwtSecret.getBytes()).build().parseClaimsJws(token).getBody());
+    public Long extractIdFromRefreshToken(String token){
+        return extractRefreshClaim(token, claims -> Long.parseLong(claims.getSubject()));
     }
 
-    public <T> Mono<T> extractClaim(String token, Function<Claims, T> claimsResolver){
-        return extractAllClaims(token)
-                .flatMap(claims -> Mono.fromCallable(() -> claimsResolver.apply(claims)));
+    private Claims extractAccessAllClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(jwtSecret.getBytes()).build().parseClaimsJws(token).getBody();
     }
 
-    private Mono<String> createToken(Map<String, Object> claims, long subject){
-        return Mono.fromCallable(() -> {
+    private Claims extractRefreshAllClaims(String token) {
+        return Jwts.parserBuilder().setSigningKey(refreshSecret.getBytes()).build().parseClaimsJws(token).getBody();
+    }
+
+    public <T> T extractAccessClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAccessAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    public <T> T extractRefreshClaim(String token, Function<Claims, T> claimsResolver) {
+        final Claims claims = extractRefreshAllClaims(token);
+        return claimsResolver.apply(claims);
+    }
+
+    private String createAccessToken(Map<String, Object> claims, long subject){
             Date dateNow = new Date();
-            Date expirationDate = new Date(dateNow.getTime() + 1000 * 60 * 60 * 24 * 23);
+            Date expirationDate = new Date(dateNow.getTime() + 1000 * 60 * 60 * 12);
 
             byte[] signingKeyBytes = jwtSecret.getBytes();
 
@@ -61,6 +77,21 @@ public class JwtUtil {
                     .setExpiration(expirationDate)
                     .signWith(Keys.hmacShaKeyFor(signingKeyBytes), SignatureAlgorithm.HS256)
                     .compact();
-        });
+    }
+
+    private String createRefreshToken(Map<String, Object> claims, long subject){
+            Date dateNow = new Date();
+            Date expirationDate = new Date(dateNow.getTime() + 1000L * 60 * 60 * 24 * 29);
+
+            byte[] signingKeyBytes = refreshSecret.getBytes();
+
+            return Jwts.builder()
+                    .setHeaderParam("typ", "REF")
+                    .setClaims(claims)
+                    .setSubject(String.valueOf(subject))
+                    .setIssuedAt(dateNow)
+                    .setExpiration(expirationDate)
+                    .signWith(Keys.hmacShaKeyFor(signingKeyBytes), SignatureAlgorithm.HS256)
+                    .compact();
     }
 }

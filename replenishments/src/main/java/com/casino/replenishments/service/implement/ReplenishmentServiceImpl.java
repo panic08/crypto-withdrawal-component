@@ -4,6 +4,7 @@ import com.casino.replenishments.exception.IncorrectTokenProvidedException;
 import com.casino.replenishments.model.Replenishment;
 import com.casino.replenishments.model.User;
 import com.casino.replenishments.property.ServicesIpProperty;
+import com.casino.replenishments.security.jwt.JwtUtil;
 import com.casino.replenishments.service.ReplenishmentService;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -17,37 +18,26 @@ import reactor.core.publisher.Mono;
 public class ReplenishmentServiceImpl implements ReplenishmentService {
 
     private final WebClient.Builder webClient;
+    private final JwtUtil jwtUtil;
     private final ServicesIpProperty servicesIpProperty;
     private static String FIND_ALL_ORIGINAL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL;
-    private static String GET_INFO_BY_TOKEN_URL;
 
     @PostConstruct
     public void init() {
         FIND_ALL_ORIGINAL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL = "http://"
                 + servicesIpProperty.getReplenishmentApiIp()
                 + ":8083/api/replenishment/findAllOriginalReplenishmentByIdWithLimit";
-        GET_INFO_BY_TOKEN_URL = "http://"
-                + servicesIpProperty.getAuthIp()
-                + ":8080/api/auth/getInfoByToken";
     }
 
     @Override
     public Flux<Replenishment> getAllReplenishment(String authorization, int startIndex, int endIndex) {
-        return getInfoByToken(authorization.split(" ")[1])
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
                 .onErrorResume(err -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMapMany(user -> {
+                .flatMapMany(id -> {
                     int finalEndIndex = endIndex + 1;
 
-                    return findAllReplenishmentByIdWithLimit(user.getId(), startIndex, finalEndIndex);
+                    return findAllReplenishmentByIdWithLimit(id, startIndex, finalEndIndex);
                 });
-    }
-
-    private Mono<User> getInfoByToken(String token){
-        return webClient.baseUrl(GET_INFO_BY_TOKEN_URL + "?token=" + token)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(User.class);
     }
     private Flux<Replenishment> findAllReplenishmentByIdWithLimit(long userId, int startIndex, int endIndex){
         return webClient.baseUrl(FIND_ALL_ORIGINAL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL + "?userId=" + userId

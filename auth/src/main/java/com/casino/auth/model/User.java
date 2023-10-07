@@ -1,5 +1,6 @@
 package com.casino.auth.model;
 
+import com.casino.auth.enums.UserRole;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
@@ -19,6 +20,7 @@ public class User implements UserDetails {
     private String username;
     private String password;
     private Boolean isAccountNonLocked;
+    private UserRole role;
     private Long registeredAt;
 
     @Override

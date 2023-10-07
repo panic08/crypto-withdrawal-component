@@ -27,4 +27,10 @@ public interface UserDataRepository extends ReactiveCrudRepository<UserData, Lon
     @Query("UPDATE users_data_table SET profile_type = :profileType WHERE user_id = :userId")
     Mono<Void> updateProfileTypeById(@Param("profileType") UserDataProfileType profileType,
                                      @Param("userId") long userId);
+
+    @Modifying
+    @Query("UPDATE users_data_table SET balance = :balance WHERE user_id = :userId")
+    Mono<Void> updateBalanceById(@Param("balance") long balance,
+                                    @Param("userId") long userId);
+
 }

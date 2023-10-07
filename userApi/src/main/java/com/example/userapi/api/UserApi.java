@@ -42,6 +42,7 @@ public class UserApi {
                         userDto.setId(user.getId());
                         userDto.setUsername(user.getUsername());
                         userDto.setPassword(user.getPassword());
+                        userDto.setRole(user.getRole());
                         userDto.setUserActivity(userActivity);
                         userDto.setUserData(userData);
                         userDto.setIsAccountNonLocked(user.getIsAccountNonLocked());
@@ -53,7 +54,7 @@ public class UserApi {
     }
 
     @GetMapping("/user/findUserById")
-    public Mono<UserDto> findUserByUsername(@RequestParam("id") long id) {
+    public Mono<UserDto> findUserById(@RequestParam("id") long id) {
         Mono<User> userMono = userRepository.findById(id);
 
         return userMono.flatMap(user -> {
@@ -72,11 +73,17 @@ public class UserApi {
                         userDto.setUserActivity(userActivity);
                         userDto.setUserData(userData);
                         userDto.setIsAccountNonLocked(user.getIsAccountNonLocked());
+                        userDto.setRole(user.getRole());
                         userDto.setRegisteredAt(user.getRegisteredAt());
 
                         return userDto;
                     });
         });
+    }
+
+    @GetMapping("/userData/findUserDataByUserId")
+    public Mono<UserData> findUserDataByUsername(@RequestParam("userId") long userId){
+        return userDataRepository.findByUserId(userId);
     }
 
     @GetMapping("/user/findOriginalUserByUsername")
@@ -116,8 +123,8 @@ public class UserApi {
 
     @PutMapping("/userData/updateServerSeedByUserId")
     public Mono<Void> updateServerSeedByUsername(
-            @RequestParam("user_id") long userId,
-            @RequestParam("server_seed") String serverSeed
+            @RequestParam("userId") long userId,
+            @RequestParam("serverSeed") String serverSeed
     ){
         return userDataRepository
                 .updateServerSeedById(serverSeed, userId);
@@ -125,16 +132,24 @@ public class UserApi {
 
     @PutMapping("/userData/updateClientSeedByUserId")
     public Mono<Void> updateClientSeedByUsername(
-            @RequestParam("user_id") long userId,
-            @RequestParam("client_seed") String clientSeed
+            @RequestParam("userId") long userId,
+            @RequestParam("clientSeed") String clientSeed
     ){
         return userDataRepository
                 .updateClientSeedById(clientSeed, userId);
     }
 
+    @PutMapping("/userData/updateBalanceByUserId")
+    public Mono<Void> updateBalanceByUserId(
+            @RequestParam("userId") long userId,
+            @RequestParam("balance") long balance
+    ){
+        return userDataRepository.updateBalanceById(balance, userId);
+    }
+
     @PutMapping("/userData/updateProfileTypeByUserId")
-    public Mono<Void> updateProfileTypeByUserId(@RequestParam("user_id") long userId,
-                                                  @RequestParam("profile_type") UserDataProfileType profileType
+    public Mono<Void> updateProfileTypeByUserId(@RequestParam("userId") long userId,
+                                                  @RequestParam("profileType") UserDataProfileType profileType
     ){
         return userDataRepository.updateProfileTypeById(profileType, userId);
     }

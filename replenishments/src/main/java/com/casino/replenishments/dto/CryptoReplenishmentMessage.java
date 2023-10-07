@@ -14,7 +14,6 @@ public class CryptoReplenishmentMessage {
     private Long userId;
     private String recipientAddress;
     private String recipientPrivateKey;
-    private String recipientPublicKey;
     private Double amount;
     private CryptoReplenishmentSessionCurrency currency;
     private Data data;

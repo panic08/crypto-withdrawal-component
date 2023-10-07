@@ -7,7 +7,7 @@ import com.casino.auth.dto.vk.VkAccessTokenDto;
 import com.casino.auth.dto.vk.VkUserDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
-import com.casino.auth.enums.UserDataRole;
+import com.casino.auth.enums.UserRole;
 import com.casino.auth.mapper.GoogleAuthorizationRequestToUserActivityMapperImpl;
 import com.casino.auth.mapper.GoogleAuthorizationRequestToUserMapperImpl;
 import com.casino.auth.mapper.VkAuthorizationRequestToUserActivityMapperImpl;
@@ -128,7 +128,8 @@ public class OAuthServiceImpl implements OAuthService {
                                                 userActivity.setUserId(userId);
 
                                                 return saveUserActivity(userActivity)
-                                                        .then(jwtUtil.generateToken(user).map(AuthorizationResponse::new));
+                                                        .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
+                                                                jwtUtil.generateRefreshToken(user)));
                                             });
                                 } else {
                                     User user = vkAuthorizationRequestToUserMapper
@@ -175,7 +176,6 @@ public class OAuthServiceImpl implements OAuthService {
                                                         UserDataProfileType.PUBLIC,
                                                         nickname,
                                                         0L,
-                                                        UserDataRole.DEFAULT,
                                                         UserDataRank.NEWBIE,
                                                         HexGeneratorUtil.generateHex(),
                                                         HexGeneratorUtil.generateHex()
@@ -186,7 +186,8 @@ public class OAuthServiceImpl implements OAuthService {
                                                                 saveUserData(userData),
                                                                 downloadPhoto
                                                         )
-                                                        .then(jwtUtil.generateToken(savedUser).map(AuthorizationResponse::new));
+                                                        .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
+                                                                jwtUtil.generateRefreshToken(savedUser)));
                                             });
                                 }
                             });
@@ -260,7 +261,8 @@ public class OAuthServiceImpl implements OAuthService {
                                         userActivity.setUserId(userId);
 
                                         return saveUserActivity(userActivity)
-                                                        .then(jwtUtil.generateToken(user).map(AuthorizationResponse::new));
+                                                .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
+                                                        jwtUtil.generateRefreshToken(user)));
                                     });
                                 } else {
                                     String nickname;
@@ -320,14 +322,14 @@ public class OAuthServiceImpl implements OAuthService {
                                                         UserDataProfileType.PUBLIC,
                                                         nickname,
                                                         0L,
-                                                        UserDataRole.DEFAULT,
                                                         UserDataRank.NEWBIE,
                                                         HexGeneratorUtil.generateHex(),
                                                         HexGeneratorUtil.generateHex()
                                                 );
 
                                                 return Mono.when(saveUserActivity(userActivity), saveUserData(userData), downloadPhoto)
-                                                        .then(jwtUtil.generateToken(savedUser).map(AuthorizationResponse::new));
+                                                        .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
+                                                                jwtUtil.generateRefreshToken(savedUser)));
                                             });
                                 }
                             });

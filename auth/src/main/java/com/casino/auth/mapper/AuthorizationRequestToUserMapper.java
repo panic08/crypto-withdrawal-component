@@ -13,6 +13,7 @@ public interface AuthorizationRequestToUserMapper {
             @Mapping(source = "username", target = "username"),
             @Mapping(source = "password", target = "password"),
             @Mapping(constant = "true", target = "isAccountNonLocked"),
+            @Mapping(constant = "DEFAULT", target = "role"),
             @Mapping(expression = "java(System.currentTimeMillis())", target = "registeredAt")
 
     })

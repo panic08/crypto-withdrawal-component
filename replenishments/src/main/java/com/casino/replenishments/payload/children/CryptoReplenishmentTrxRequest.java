@@ -8,6 +8,6 @@ import org.hibernate.validator.constraints.Range;
 @Getter
 @Setter
 public class CryptoReplenishmentTrxRequest extends CryptoReplenishmentRequest {
-    @Range(min = 11, message = "Minimum amount for TRX replenishment - 11 TRX")
+    @Range(min = 13, message = "Minimum amount for TRX replenishment - 13 TRX")
     private double amount;
 }

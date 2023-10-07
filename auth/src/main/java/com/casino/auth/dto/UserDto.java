@@ -1,5 +1,6 @@
 package com.casino.auth.dto;
 
+import com.casino.auth.enums.UserRole;
 import com.casino.auth.model.UserActivity;
 import com.casino.auth.model.UserData;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -27,5 +28,6 @@ public class UserDto {
     private UserData userData;
     @JsonProperty("account_non_locked")
     private boolean isAccountNonLocked;
+    private UserRole role;
     private long registeredAt;
 }

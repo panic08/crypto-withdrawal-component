@@ -3,7 +3,7 @@ package com.casino.auth.service.implement;
 import com.casino.auth.dto.UserDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
-import com.casino.auth.enums.UserDataRole;
+import com.casino.auth.enums.UserRole;
 import com.casino.auth.exception.IncorrectTokenProvidedException;
 import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.UserAlreadyExistsException;
@@ -40,6 +40,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private static String SAVE_USER_ACTIVITY_URL;
     private static String SAVE_USER_DATA_URL;
     private static String FIND_ORIGINAL_USER_BY_USERNAME_URL;
+    private static String FIND_ORIGINAL_USER_BY_ID_URL;
     private static String FIND_USER_BY_ID_URL;
 
     @PostConstruct
@@ -62,6 +63,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         FIND_USER_BY_ID_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/user/findUserById";
+        FIND_ORIGINAL_USER_BY_ID_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/findOriginalUserById";
     }
 
     @Override
@@ -71,6 +75,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                     .authorizationRequestToUser(authorizationRequest);
 
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+            user.setRole(UserRole.DEFAULT);
 
             return user;
         }).flatMap(user -> existsByUsername(user.getUsername())
@@ -96,7 +101,6 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                                         UserDataProfileType.PUBLIC,
                                         username,
                                         0L,
-                                        UserDataRole.DEFAULT,
                                         UserDataRank.NEWBIE,
                                         HexGeneratorUtil.generateHex(),
                                         HexGeneratorUtil.generateHex()
@@ -106,7 +110,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                                 return Mono.zip(
                                         saveUserActivity(userActivity),
                                         saveUserData(userData)
-                                ).then(jwtUtil.generateToken(savedUser)).map(AuthorizationResponse::new);
+                                ).thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
+                                        jwtUtil.generateRefreshToken(savedUser)));
                             });
                 }));
     }
@@ -128,15 +133,29 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             Mono<UserActivity> userActivityMono = saveUserActivity(userActivity);
 
             return Mono.zip(userMono, userActivityMono);
-        }).flatMap(objects -> jwtUtil.generateToken(objects.getT1()).map(AuthorizationResponse::new));
+        }).map(objects -> {
+            String accessToken = jwtUtil.generateAccessToken(objects.getT1());
+            String refreshToken = jwtUtil.generateRefreshToken(objects.getT1());
+
+            return new AuthorizationResponse(accessToken, refreshToken);
+        });
     }
 
     @Override
-    public Mono<UserDto> getInfoByToken(String token) {
-        return jwtUtil.extractId(token)
-                .flatMap(this::findUserById)
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")));
+    public Mono<UserDto> getUserInfoByAccessToken(String authorization) {
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
+                .flatMap(this::findUserById);
     }
+
+    @Override
+    public Mono<AuthorizationResponse> handleRefreshAccessToken(String authorization) {
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromRefreshToken(authorization.split(" ")[1]))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
+                .flatMap(this::findOriginalUserById)
+                .map(user -> new AuthorizationResponse(jwtUtil.generateAccessToken(user), null));
+    }
+
     private Mono<User> findOriginalUserByUsername(String username){
         return webClient
                 .baseUrl(FIND_ORIGINAL_USER_BY_USERNAME_URL + "?username=" + username)
@@ -184,6 +203,15 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 .retrieve()
                 .bodyToMono(UserData.class)
                 .cache();
+    }
+
+    private Mono<User> findOriginalUserById(long id){
+        return WebClient.builder()
+                .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
+                .build()
+                .get()
+                .retrieve()
+                .bodyToMono(User.class);
     }
 
     private Mono<UserActivity> saveUserActivity(UserActivity userActivity){

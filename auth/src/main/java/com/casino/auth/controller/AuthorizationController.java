@@ -27,9 +27,14 @@ public class AuthorizationController {
         return authorizationService.handleLogin(authorizationRequest);
     }
 
-    @GetMapping("/getInfoByToken")
-    public Mono<UserDto> getInfoByToken(@RequestParam("token") String token){
-        return authorizationService.getInfoByToken(token);
+    @PostMapping("/userInfo")
+    public Mono<UserDto> getUserInfoByAccessToken(@RequestHeader("Authorization") String authorization){
+        return authorizationService.getUserInfoByAccessToken(authorization);
+    }
+
+    @PostMapping("/refresh")
+    public Mono<AuthorizationResponse> handleRefreshAccessToken(@RequestHeader("Authorization") String authorization){
+        return authorizationService.handleRefreshAccessToken(authorization);
     }
 
 }

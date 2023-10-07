@@ -2,8 +2,7 @@ package com.casino.auth.model;
 
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
-import com.casino.auth.enums.UserDataRole;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.casino.auth.enums.UserRole;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -22,7 +21,6 @@ public class UserData {
     private UserDataProfileType profileType;
     private String nickname;
     private Long balance;
-    private UserDataRole role;
     private UserDataRank rank;
     private String serverSeed;
     private String clientSeed;

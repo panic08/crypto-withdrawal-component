@@ -1,5 +1,6 @@
 package com.example.userapi.dto;
 
+import com.example.userapi.enums.UserRole;
 import com.example.userapi.model.UserActivity;
 import com.example.userapi.model.UserData;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,5 +23,6 @@ public class UserDto {
     private UserData userData;
     @JsonProperty("account_non_locked")
     private Boolean isAccountNonLocked;
+    private UserRole role;
     private Long registeredAt;
 }

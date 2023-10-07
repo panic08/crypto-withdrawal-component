@@ -2,7 +2,7 @@ package com.example.userapi.model;
 
 import com.example.userapi.enums.UserDataProfileType;
 import com.example.userapi.enums.UserDataRank;
-import com.example.userapi.enums.UserDataRole;
+import com.example.userapi.enums.UserRole;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
@@ -29,9 +29,6 @@ public class UserData {
 
     @Column("balance")
     private Long balance;
-
-    @Column("role")
-    private UserDataRole role;
 
     @Column("rank")
     private UserDataRank rank;

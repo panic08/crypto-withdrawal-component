@@ -2,7 +2,7 @@ package com.casino.auth.dto;
 
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
-import com.casino.auth.enums.UserDataRole;
+import com.casino.auth.enums.UserRole;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
@@ -23,6 +23,7 @@ public class PublishUserDto {
     private PublishUserData userData;
     @JsonProperty("account_non_locked")
     private boolean isAccountNonLocked;
+    private UserRole role;
     private long registeredAt;
 
     @Getter
@@ -37,7 +38,6 @@ public class PublishUserDto {
         private UserDataProfileType profileType;
         private String nickname;
         private Long balance;
-        private UserDataRole role;
         private UserDataRank rank;
     }
 }

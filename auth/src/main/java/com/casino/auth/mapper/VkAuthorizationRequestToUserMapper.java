@@ -13,6 +13,7 @@ public interface VkAuthorizationRequestToUserMapper {
             @Mapping(ignore = true, target = "username"),
             @Mapping(ignore = true, target = "password"),
             @Mapping(constant = "true", target = "isAccountNonLocked"),
+            @Mapping(constant = "DEFAULT", target = "role"),
             @Mapping(expression = "java(System.currentTimeMillis())", target = "registeredAt")
 
     })

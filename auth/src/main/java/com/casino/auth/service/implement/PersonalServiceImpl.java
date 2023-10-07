@@ -48,35 +48,35 @@ public class PersonalServiceImpl implements PersonalService {
 
     @Override
     public Mono<ChangeServerSeedResponse> changeServerSeed(String authorization) {
-        return jwtUtil.extractId(authorization.split(" ")[1])
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
                 .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(id -> {
                     String hex = HexGeneratorUtil.generateHex();
 
-                    return changeServerSeed(id, hex).thenReturn(new ChangeServerSeedResponse(hex));
+                    return updateServerSeedByUserId(id, hex).thenReturn(new ChangeServerSeedResponse(hex));
                 });
     }
 
     @Override
     public Mono<ChangeClientSeedResponse> changeClientSeed(String authorization, ChangeClientSeedRequest changeClientSeedRequest) {
-        return jwtUtil.extractId(authorization.split(" ")[1])
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
                 .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(id -> changeClientSeed(id,
+                .flatMap(id -> updateClientSeedByUserId(id,
                         changeClientSeedRequest.getClientSeed())
                         .thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
     }
 
     @Override
     public Mono<ChangeProfileTypeResponse> changeProfileType(String authorization, ChangeProfileTypeRequest changeProfileTypeRequest) {
-        return jwtUtil.extractId(authorization.split(" ")[1])
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
                 .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(id -> changeProfileType(id,
+                .flatMap(id -> updateProfileTypeByUserId(id,
                         changeProfileTypeRequest.getProfileType())
                         .thenReturn(new ChangeProfileTypeResponse(changeProfileTypeRequest.getProfileType())));
     }
 
     public Mono<Void> changePhoto(String authorization, FilePart multipartFile) {
-        return jwtUtil.extractId(authorization.split(" ")[1])
+        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
                 .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
                 .flatMap(id -> {
 
@@ -112,9 +112,9 @@ public class PersonalServiceImpl implements PersonalService {
     }
 
 
-    private Mono<Void> changeServerSeed(long userId, String serverSeed){
-        return webClient.baseUrl(UPDATE_SERVER_SEED_BY_USERID + "?user_id=" + userId
-                + "&server_seed=" + serverSeed)
+    private Mono<Void> updateServerSeedByUserId(long userId, String serverSeed){
+        return webClient.baseUrl(UPDATE_SERVER_SEED_BY_USERID + "?userId=" + userId
+                + "&serverSeed=" + serverSeed)
                 .build()
                 .put()
                 .retrieve()
@@ -122,9 +122,9 @@ public class PersonalServiceImpl implements PersonalService {
                 .cache();
     }
 
-    private Mono<Void> changeClientSeed(long userId, String clientSeed){
-        return webClient.baseUrl(UPDATE_CLIENT_SEED_BY_USERID + "?user_id=" + userId
-                        + "&client_seed=" + clientSeed)
+    private Mono<Void> updateClientSeedByUserId(long userId, String clientSeed){
+        return webClient.baseUrl(UPDATE_CLIENT_SEED_BY_USERID + "?userId=" + userId
+                        + "&clientSeed=" + clientSeed)
                 .build()
                 .put()
                 .retrieve()
@@ -132,9 +132,9 @@ public class PersonalServiceImpl implements PersonalService {
                 .cache();
     }
 
-    private Mono<Void> changeProfileType(long userId, UserDataProfileType profileType){
-        return webClient.baseUrl(UPDATE_PROFILE_TYPE_BY_USERID + "?user_id=" + userId
-                + "&profile_type=" + profileType)
+    private Mono<Void> updateProfileTypeByUserId(long userId, UserDataProfileType profileType){
+        return webClient.baseUrl(UPDATE_PROFILE_TYPE_BY_USERID + "?userId=" + userId
+                + "&profileType=" + profileType)
                 .build()
                 .put()
                 .retrieve()

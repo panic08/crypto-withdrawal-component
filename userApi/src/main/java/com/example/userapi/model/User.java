@@ -1,5 +1,6 @@
 package com.example.userapi.model;
 
+import com.example.userapi.enums.UserRole;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
@@ -24,6 +25,9 @@ public class User {
 
     @Column("account_non_locked")
     private Boolean isAccountNonLocked;
+
+    @Column("role")
+    private UserRole role;
 
     @Column("registered_at")
     private Long registeredAt;

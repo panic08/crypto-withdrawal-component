@@ -1,15 +1,15 @@
-package com.casino.replenishments.dto;
+package com.casino.replenishments.model;
 
+import com.casino.replenishments.enums.CryptoDataCurrency;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 
-@Getter
-@Setter
+@Data
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class CryptoDataDto {
+public class CryptoData {
+    private Long id;
     private String address;
     private String privateKey;
-    private String publicKey;
+    private CryptoDataCurrency currency;
 }

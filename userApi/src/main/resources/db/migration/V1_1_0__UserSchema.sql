@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users_table(
     username VARCHAR(255) NOT NULL,
     password VARCHAR(255) NOT NULL,
     account_non_locked BOOL NOT NULL,
+    role VARCHAR(255) NOT NULL,
     registered_at BIGINT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS users_data_table(
@@ -11,7 +12,6 @@ CREATE TABLE IF NOT EXISTS users_data_table(
     profile_type VARCHAR(255) NOT NULL,
     nickname VARCHAR(255) NOT NULL,
     balance BIGINT NOT NULL,
-    role VARCHAR(255) NOT NULL,
     rank VARCHAR(255) NOT NULL,
     server_seed VARCHAR(255) NOT NULL,
     client_seed VARCHAR(255) NOT NULL,

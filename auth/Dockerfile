@@ -7,11 +7,11 @@ WORKDIR /app
 
 COPY . /app
 
-RUN wget https://services.gradle.org/distributions/gradle-7.1-bin.zip -P /tmp && \
-    unzip -d /opt/gradle /tmp/gradle-7.1-bin.zip && \
-    rm -rf /tmp/gradle-7.1-bin.zip
-
-ENV PATH=$PATH:/opt/gradle/gradle-7.1/bin
+RUN curl -L https://services.gradle.org/distributions/gradle-6.5.1-bin.zip -o gradle-6.5.1-bin.zip
+RUN unzip gradle-6.5.1-bin.zip
+ENV GRADLE_HOME=/gradle/gradle-6.5.1
+ENV PATH=$PATH:$GRADLE_HOME/bin
+RUN gradle --version
 
 FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 

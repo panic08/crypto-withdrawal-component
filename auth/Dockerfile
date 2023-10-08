@@ -9,6 +9,8 @@ RUN gradle --version
 
 FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 
+COPY --from=build /app /app
+
 RUN gradle build
 
 RUN gu install native-image

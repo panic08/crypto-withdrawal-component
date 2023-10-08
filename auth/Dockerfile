@@ -2,8 +2,9 @@ FROM ubuntu:latest
 FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 
 WORKDIR /app
-
 COPY . /app
+
+RUN apt-get update && apt-get install -y wget unzip
 
 RUN wget https://services.gradle.org/distributions/gradle-7.1-bin.zip -P /tmp && \
     unzip -d /opt/gradle /tmp/gradle-7.1-bin.zip && \

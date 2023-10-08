@@ -5,7 +5,9 @@ WORKDIR /app
 
 COPY . /app
 
-RUN chmod +x /app/gradlew && /app/gradlew build
+RUN chmod +x /app/gradlew
+
+RUN /app/gradlew build
 
 COPY /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
 

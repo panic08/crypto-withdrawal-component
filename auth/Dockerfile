@@ -1,4 +1,3 @@
-
 #FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 FROM openjdk:17
 
@@ -6,9 +5,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN /app/gradlew build
-
-#RUN gu install native-image
+RUN chmod +x /app/gradlew && /app/gradlew build
 
 COPY /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
 

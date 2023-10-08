@@ -3,7 +3,7 @@ services:
   postgres:
     image: postgres:latest
     environment:
-      POSTGRES_DB: users,replenishments
+      POSTGRES_DB: users
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
     volumes:

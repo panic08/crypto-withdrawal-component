@@ -1,17 +1,12 @@
 
-FROM ubuntu:latest
+#FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
+FROM openjdk:17
 
 WORKDIR /app
 
 COPY . /app
 
-RUN apt-get update && apt-get install -y gradle
-
-RUN gradle --version
-
-#FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
-
-RUN gradle build
+RUN /app/gradlew build
 
 #RUN gu install native-image
 

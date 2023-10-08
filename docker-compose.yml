@@ -16,7 +16,7 @@ services:
     volumes:
       - /srv/db_data:/var/lib/postgresql/data
 
-  userApi:
+  userapi:
     build:
       context: ./userApi
     ports:

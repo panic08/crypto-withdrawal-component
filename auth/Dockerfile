@@ -1,9 +1,11 @@
 
-FROM gradle AS build
+FROM ubuntu:latest
 
 WORKDIR /app
 
 COPY . /app
+
+RUN apt-get update && apt-get install -y gradle
 
 RUN gradle --version
 

@@ -1,34 +1,30 @@
-# Используйте базовый образ GraalVM
-FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 
-# Установите необходимые инструменты в контейнере GraalVM
-RUN gu install native-image
+FROM alpine:latest as installer
 
-# Укажите рабочую директорию
-WORKDIR /app
-
-# Копируйте исходный код проекта
-COPY . /app
-
-# Установите пакеты wget и unzip с помощью apk
 RUN apk update && apk add wget unzip
 
-# Загрузите и установите Gradle
+WORKDIR /app
+
+COPY . /app
+
 RUN wget https://services.gradle.org/distributions/gradle-7.1-bin.zip -P /tmp && \
     unzip -d /opt/gradle /tmp/gradle-7.1-bin.zip && \
     rm -rf /tmp/gradle-7.1-bin.zip
 
-# Добавьте Gradle в переменную PATH
 ENV PATH=$PATH:/opt/gradle/gradle-7.1/bin
 
-# Установите libgomp1 с использованием apk
-RUN apk update && apk add libgomp1
+RUN apk add libgomp1
 
-# Соберите проект с помощью Gradle
 RUN /opt/gradle/gradle-7.1/bin/gradle build
 
-# Выставите порт, который вы хотите экспонировать
+FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
+
+RUN gu install native-image
+
+WORKDIR /app
+
+COPY --from=installer /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
+
 EXPOSE 8080
 
-# Запустите приложение
-CMD ["java", "-jar", "/app/build/libs/auth-0.0.1-SNAPSHOT.jar", "--spring.profiles.active=prod"]
+CMD ["java", "-jar", "/app/auth.jar", "--spring.profiles.active=prod"]

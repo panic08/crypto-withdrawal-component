@@ -9,11 +9,11 @@ RUN apt-get update && apt-get install -y gradle
 
 RUN gradle --version
 
-FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
+#FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 
 RUN gradle build
 
-RUN gu install native-image
+#RUN gu install native-image
 
 COPY /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
 

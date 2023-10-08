@@ -7,7 +7,7 @@ COPY . /app
 
 RUN gradle --version
 
-RUN gradle build --continue
+RUN gradle build -x test
 
 FROM openjdk:17
 

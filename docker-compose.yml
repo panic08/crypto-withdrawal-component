@@ -1,12 +1,5 @@
 version: '3'
 services:
-  auth:
-    build:
-      context: ./auth
-    ports:
-      - "8080:8080"
-    volumes:
-      - /srv/photos:/srv/photos
   postgres:
     image: postgres:latest
     environment:
@@ -15,6 +8,14 @@ services:
       POSTGRES_PASSWORD: 1234
     volumes:
       - /srv/db_data:/var/lib/postgresql/data
+
+  auth:
+    build:
+      context: ./auth
+    ports:
+      - "8080:8080"
+    volumes:
+      - /srv/photos:/srv/photos
 
   userapi:
     build:

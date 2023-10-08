@@ -15,7 +15,7 @@ ENV PATH=$PATH:/opt/gradle/gradle-7.1/bin
 
 FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
 
-RUN /opt/gradle/gradle-7.1/bin/gradle build
+RUN gradle build
 
 RUN gu install native-image
 

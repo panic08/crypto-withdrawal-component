@@ -1,16 +1,17 @@
 #FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
-FROM gradle
+FROM gradle AS Build
 
 WORKDIR /app
 
 COPY . /app
 
 RUN gradle --version
-RUN gradle build
+
+RUN gradle build --continue
 
 FROM openjdk:17
 
-COPY /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
+COPY --from=Build /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
 
 EXPOSE 8080
 

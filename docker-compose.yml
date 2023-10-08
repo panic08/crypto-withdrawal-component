@@ -7,17 +7,17 @@ services:
       - "8080:8080"
     volumes:
       - /srv/photos:/srv/photos
-  userApi:
-    build:
-      context: ./userApi
-    ports:
-      - "8081:8081"
   postgres:
     image: postgres:latest
     environment:
       POSTGRES_DB: users,replenishments
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
-
     volumes:
       - /srv/db_data:/var/lib/postgresql/data
+
+  userApi:
+    build:
+      context: ./userApi
+    ports:
+      - "8081:8081"

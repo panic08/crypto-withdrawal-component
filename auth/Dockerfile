@@ -13,9 +13,9 @@ RUN wget https://services.gradle.org/distributions/gradle-7.1-bin.zip -P /tmp &&
 
 ENV PATH=$PATH:/opt/gradle/gradle-7.1/bin
 
-RUN /opt/gradle/gradle-7.1/bin/gradle build
-
 FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
+
+RUN /opt/gradle/gradle-7.1/bin/gradle build
 
 RUN gu install native-image
 

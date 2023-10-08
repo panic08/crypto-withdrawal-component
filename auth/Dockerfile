@@ -1,13 +1,14 @@
 #FROM ghcr.io/graalvm/graalvm-ce:latest as graalvm
-FROM openjdk:17
+FROM gradle
 
 WORKDIR /app
 
 COPY . /app
 
-RUN chmod +x /app/gradlew
+RUN gradle --version
+RUN gradle build
 
-RUN /app/gradlew build
+FROM openjdk:17
 
 COPY /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
 

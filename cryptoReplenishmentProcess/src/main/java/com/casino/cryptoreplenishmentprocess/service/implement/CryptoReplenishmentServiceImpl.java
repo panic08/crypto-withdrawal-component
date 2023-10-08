@@ -125,7 +125,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
         WebClient.Builder webClient = WebClient.builder();
 
         return webClient
-                .baseUrl("https://api.trongrid.io/v1/accounts/" + address + "/transactions?limit=1")
+                .baseUrl("https://api.trongrid.io/v1/accounts/" + address + "/transactions?limit=3")
                 .build()
                 .get()
                 .retrieve()

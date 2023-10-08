@@ -1,7 +1,7 @@
 
-FROM alpine:latest as installer
+FROM ubuntu:latest as installer
 
-RUN apk update && apk add wget unzip
+RUN apt-get update && apt-get install -y unzip
 
 WORKDIR /app
 
@@ -21,7 +21,7 @@ RUN gu install native-image
 
 WORKDIR /app
 
-COPY --from=installer /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
+COPY /app/build/libs/auth-0.0.1-SNAPSHOT.jar /app/auth.jar
 
 EXPOSE 8080
 

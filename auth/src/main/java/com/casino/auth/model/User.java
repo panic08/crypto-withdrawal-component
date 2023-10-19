@@ -19,8 +19,8 @@ public class User implements UserDetails {
     private Long id;
     private String username;
     private String password;
-    private Boolean isAccountNonLocked;
     private UserRole role;
+    private Boolean isAccountNonLocked;
     private Long registeredAt;
 
     @Override

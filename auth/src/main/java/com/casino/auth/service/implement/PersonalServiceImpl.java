@@ -1,9 +1,12 @@
 package com.casino.auth.service.implement;
 
 import com.casino.auth.enums.UserDataProfileType;
+import com.casino.auth.enums.UserRole;
 import com.casino.auth.exception.FileSizeExceedsLimitException;
 import com.casino.auth.exception.IncorrectTokenProvidedException;
 import com.casino.auth.exception.InvalidFileExtensionException;
+import com.casino.auth.exception.UnauthorizedRoleException;
+import com.casino.auth.model.User;
 import com.casino.auth.payload.*;
 import com.casino.auth.property.ServicesIpProperty;
 import com.casino.auth.security.jwt.JwtUtil;
@@ -32,6 +35,9 @@ public class PersonalServiceImpl implements PersonalService {
     private static String UPDATE_SERVER_SEED_BY_USERID;
     private static String UPDATE_CLIENT_SEED_BY_USERID;
     private static String UPDATE_PROFILE_TYPE_BY_USERID;
+    private static String UPDATE_USER_ACCOUNT_NON_LOCKED_BY_ID;
+    private static String UPDATE_USERDATA_BALANCE_BY_USERID;
+    private static String FIND_ORIGINAL_USER_BY_ID_URL;
 
     @PostConstruct
     public void init() {
@@ -44,70 +50,90 @@ public class PersonalServiceImpl implements PersonalService {
         UPDATE_PROFILE_TYPE_BY_USERID = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/userData/updateProfileTypeByUserId";
+        UPDATE_USERDATA_BALANCE_BY_USERID = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userData/updateBalanceByUserId";
+        UPDATE_USER_ACCOUNT_NON_LOCKED_BY_ID = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/updateAccountNonLockedById";
+        FIND_ORIGINAL_USER_BY_ID_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/user/findOriginalUserById";
     }
 
     @Override
-    public Mono<ChangeServerSeedResponse> changeServerSeed(String authorization) {
-        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(id -> {
-                    String hex = HexGeneratorUtil.generateHex();
+    public Mono<ChangeServerSeedResponse> changeServerSeed(long id) {
+        String hex = HexGeneratorUtil.generateHex();
 
-                    return updateServerSeedByUserId(id, hex).thenReturn(new ChangeServerSeedResponse(hex));
+        return  updateServerSeedByUserId(id, hex).thenReturn(new ChangeServerSeedResponse(hex));
+    }
+
+    @Override
+    public Mono<ChangeClientSeedPayload> changeClientSeed(long id, ChangeClientSeedPayload changeClientSeedPayload) {
+        return updateClientSeedByUserId(id, changeClientSeedPayload.getClientSeed())
+                        .thenReturn(new ChangeClientSeedPayload(changeClientSeedPayload.getClientSeed()));
+    }
+
+    @Override
+    public Mono<ChangeProfileTypePayload> changeProfileType(long id, ChangeProfileTypePayload changeProfileTypePayload) {
+        return updateProfileTypeByUserId(id, changeProfileTypePayload.getProfileType())
+                        .thenReturn(new ChangeProfileTypePayload(changeProfileTypePayload.getProfileType()));
+    }
+
+    public Mono<Void> changePhoto(long id, FilePart multipartFile) {
+            long maxSizeBytes = 1024 * 1024;
+            long size = multipartFile.headers().getContentLength();
+            String filename = multipartFile.filename().toLowerCase();
+            String extension = filename.substring(filename.lastIndexOf('.'));
+
+
+            if (size > maxSizeBytes) {
+                return Mono.error(new FileSizeExceedsLimitException("File size exceeds the maximum allowed size"));
+            }
+
+            if (!multipartFile.filename().toLowerCase().endsWith(".jpg") && !multipartFile.filename().toLowerCase().endsWith(".png")) {
+                return Mono.error(new InvalidFileExtensionException("Invalid file extension"));
+            }
+
+            Path filePath = Paths.get(UPLOAD_DIR, id + extension);
+
+            File file1 = new File(Paths.get(UPLOAD_DIR, id + ".jpg").toUri());
+            File file2 = new File(Paths.get(UPLOAD_DIR, id + ".png").toUri());
+
+            if (file1.exists()) {
+                file1.delete();
+            } else if (file2.exists()) {
+                file2.delete();
+            }
+
+            return multipartFile
+                    .transferTo(filePath.toFile())
+                    .then(Mono.empty());
+        }
+
+    @Override
+    public Mono<ChangeBalancePayload> changeBalance(long id, ChangeBalancePayload changeBalancePayload) {
+        return findOriginalUserById(id)
+                .flatMap(user -> {
+                    if (user.getRole().equals(UserRole.ADMIN)) {
+                        return updateUserDataBalanceByUserId(changeBalancePayload.getBalance(), changeBalancePayload.getUserId())
+                                .thenReturn(new ChangeBalancePayload(changeBalancePayload.getUserId(), changeBalancePayload.getBalance()));
+                    } else {
+                        return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
+                    }
                 });
     }
 
     @Override
-    public Mono<ChangeClientSeedResponse> changeClientSeed(String authorization, ChangeClientSeedRequest changeClientSeedRequest) {
-        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(id -> updateClientSeedByUserId(id,
-                        changeClientSeedRequest.getClientSeed())
-                        .thenReturn(new ChangeClientSeedResponse(changeClientSeedRequest.getClientSeed())));
-    }
-
-    @Override
-    public Mono<ChangeProfileTypeResponse> changeProfileType(String authorization, ChangeProfileTypeRequest changeProfileTypeRequest) {
-        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(id -> updateProfileTypeByUserId(id,
-                        changeProfileTypeRequest.getProfileType())
-                        .thenReturn(new ChangeProfileTypeResponse(changeProfileTypeRequest.getProfileType())));
-    }
-
-    public Mono<Void> changePhoto(String authorization, FilePart multipartFile) {
-        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(id -> {
-
-                    long maxSizeBytes = 1024 * 1024;
-                    long size = multipartFile.headers().getContentLength();
-                    String filename = multipartFile.filename().toLowerCase();
-                    String extension = filename.substring(filename.lastIndexOf('.'));
-
-
-                    if (size > maxSizeBytes) {
-                        return Mono.error(new FileSizeExceedsLimitException("File size exceeds the maximum allowed size"));
+    public Mono<ChangeIsAccountNonLockedPayload> changeIsAccountNonLocked(long id, ChangeIsAccountNonLockedPayload changeIsAccountNonLockedPayload) {
+        return findOriginalUserById(id)
+                .flatMap(user -> {
+                    if (user.getRole().equals(UserRole.ADMIN)){
+                        return updateUserAccountNonLockedById(changeIsAccountNonLockedPayload.isAccountNonLocked(), changeIsAccountNonLockedPayload.getUserId())
+                                .thenReturn(new ChangeIsAccountNonLockedPayload(changeIsAccountNonLockedPayload.getUserId(), changeIsAccountNonLockedPayload.isAccountNonLocked()));
+                    } else {
+                        return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
                     }
-
-                    if (!multipartFile.filename().toLowerCase().endsWith(".jpg") && !multipartFile.filename().toLowerCase().endsWith(".png")) {
-                        return Mono.error(new InvalidFileExtensionException("Invalid file extension"));
-                    }
-
-                    Path filePath = Paths.get(UPLOAD_DIR, id + extension);
-
-                    File file1 = new File(Paths.get(UPLOAD_DIR, id + ".jpg").toUri());
-                    File file2 = new File(Paths.get(UPLOAD_DIR, id + ".png").toUri());
-
-                    if (file1.exists()) {
-                        file1.delete();
-                    } else if (file2.exists()) {
-                        file2.delete();
-                    }
-
-                    return multipartFile
-                            .transferTo(filePath.toFile())
-                            .then(Mono.empty());
                 });
     }
 
@@ -140,6 +166,34 @@ public class PersonalServiceImpl implements PersonalService {
                 .retrieve()
                 .bodyToMono(Void.class)
                 .cache();
+    }
+
+    private Mono<Void> updateUserDataBalanceByUserId(long balance, long userId){
+        return webClient.baseUrl(UPDATE_USERDATA_BALANCE_BY_USERID + "?userId=" + userId
+                        + "&balance=" + balance)
+                .build()
+                .put()
+                .retrieve()
+                .bodyToMono(Void.class)
+                .cache();
+    }
+    private Mono<Void> updateUserAccountNonLockedById(boolean isAccountNonLocked, long id){
+        return webClient.baseUrl(UPDATE_USER_ACCOUNT_NON_LOCKED_BY_ID + "?id=" + id
+                        + "&accountNonLocked=" + isAccountNonLocked)
+                .build()
+                .put()
+                .retrieve()
+                .bodyToMono(Void.class)
+                .cache();
+    }
+
+    private Mono<User> findOriginalUserById(long id){
+        return webClient
+                .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
+                .build()
+                .get()
+                .retrieve()
+                .bodyToMono(User.class);
     }
 
 }

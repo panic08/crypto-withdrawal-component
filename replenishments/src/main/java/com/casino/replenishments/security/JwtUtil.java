@@ -1,4 +1,4 @@
-package com.casino.replenishments.security.jwt;
+package com.casino.replenishments.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

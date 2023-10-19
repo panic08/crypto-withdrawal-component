@@ -4,6 +4,8 @@
   <component name="FrameworkDetectionExcludesConfiguration">
     <file type="web" url="file://$PROJECT_DIR$/auth" />
     <file type="web" url="file://$PROJECT_DIR$/cryptoReplenishmentProcess" />
+    <file type="web" url="file://$PROJECT_DIR$/financeAdpi" />
+    <file type="web" url="file://$PROJECT_DIR$/financeApi" />
     <file type="web" url="file://$PROJECT_DIR$/replenishmentApi" />
     <file type="web" url="file://$PROJECT_DIR$/replenishmentCreate" />
     <file type="web" url="file://$PROJECT_DIR$/replenishments" />

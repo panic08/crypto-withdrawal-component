@@ -7,5 +7,5 @@ public enum ReplenishmentCurrency {
     BTC,
     ETH,
     USDT_TRC20,
-    USDT_ERC20
+    BSC
 }

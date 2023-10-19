@@ -127,7 +127,15 @@ public class UserApi {
             @RequestParam("serverSeed") String serverSeed
     ){
         return userDataRepository
-                .updateServerSeedById(serverSeed, userId);
+                .updateServerSeedByUserId(serverSeed, userId);
+    }
+
+    @PutMapping("/user/updateAccountNonLockedById")
+    public Mono<Void> updateAccountNonLocked(
+            @RequestParam("id") long id,
+            @RequestParam("accountNonLocked") boolean isAccountNonLocked
+    ){
+        return userRepository.updateAccountNonLockedById(isAccountNonLocked, id);
     }
 
     @PutMapping("/userData/updateClientSeedByUserId")
@@ -136,7 +144,7 @@ public class UserApi {
             @RequestParam("clientSeed") String clientSeed
     ){
         return userDataRepository
-                .updateClientSeedById(clientSeed, userId);
+                .updateClientSeedByUserId(clientSeed, userId);
     }
 
     @PutMapping("/userData/updateBalanceByUserId")
@@ -144,14 +152,14 @@ public class UserApi {
             @RequestParam("userId") long userId,
             @RequestParam("balance") long balance
     ){
-        return userDataRepository.updateBalanceById(balance, userId);
+        return userDataRepository.updateBalanceByUserId(balance, userId);
     }
 
     @PutMapping("/userData/updateProfileTypeByUserId")
     public Mono<Void> updateProfileTypeByUserId(@RequestParam("userId") long userId,
                                                   @RequestParam("profileType") UserDataProfileType profileType
     ){
-        return userDataRepository.updateProfileTypeById(profileType, userId);
+        return userDataRepository.updateProfileTypeByUserId(profileType, userId);
     }
 
 

@@ -34,7 +34,7 @@ public class CryptoReplenishmentListener {
                         .subscribe();
                 case USDT_TRC20 -> cryptoReplenishmentService.handleUsdtTrc20CryptoReplenishment(cryptoReplenishmentMessage)
                         .subscribe();
-                case USDT_ERC20 -> cryptoReplenishmentService.handleUsdtErc20CryptoReplenishment(cryptoReplenishmentMessage)
+                case BSC -> cryptoReplenishmentService.handleBscCryptoReplenishment(cryptoReplenishmentMessage)
                         .subscribe();
             }
     }

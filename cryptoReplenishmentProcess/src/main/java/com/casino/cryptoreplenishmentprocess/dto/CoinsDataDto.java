@@ -8,10 +8,19 @@ import lombok.Setter;
 @Setter
 public class CoinsDataDto {
     @JsonProperty("tron")
-    private TronData tronData;
+    private PriceData tronData;
+    @JsonProperty("tether")
+    private PriceData tetherData;
+    @JsonProperty("ethereum")
+    private PriceData ethereumData;
+    @JsonProperty("binancecoin")
+    private PriceData binanceCoinData;
+    @JsonProperty("bitcoin")
+    private PriceData bitcoinData;
+
     @Getter
     @Setter
-    public static class TronData{
-        private double usd;
+    public static class PriceData{
+        private double rub;
     }
 }

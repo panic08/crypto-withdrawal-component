@@ -1,5 +1,6 @@
 package com.casino.auth.payload;
 
+import com.casino.auth.enums.UserDataProfileType;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,6 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class ChangeClientSeedResponse {
-    private String clientSeed;
+public class ChangeProfileTypePayload {
+    private UserDataProfileType profileType;
 }

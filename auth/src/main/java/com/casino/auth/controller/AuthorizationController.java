@@ -6,6 +6,10 @@ import com.casino.auth.payload.AuthorizationResponse;
 import com.casino.auth.service.implement.AuthorizationServiceImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -27,9 +31,9 @@ public class AuthorizationController {
         return authorizationService.handleLogin(authorizationRequest);
     }
 
-    @PostMapping("/userInfo")
-    public Mono<UserDto> getUserInfoByAccessToken(@RequestHeader("Authorization") String authorization){
-        return authorizationService.getUserInfoByAccessToken(authorization);
+    @PostMapping("/info")
+    public Mono<UserDto> getUserInfoByAccessToken(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken){
+        return authorizationService.getUserInfo(Long.parseLong(usernamePasswordAuthenticationToken.getName()));
     }
 
     @PostMapping("/refresh")

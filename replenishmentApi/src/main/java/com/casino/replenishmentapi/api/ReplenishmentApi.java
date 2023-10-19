@@ -8,7 +8,6 @@ import com.casino.replenishmentapi.model.Replenishment;
 import com.casino.replenishmentapi.repository.CryptoDataRepository;
 import com.casino.replenishmentapi.repository.CryptoReplenishmentSessionRepository;
 import com.casino.replenishmentapi.repository.ReplenishmentRepository;
-import com.casino.replenishmentapi.repository.implement.CryptoReplenishmentSessionRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -22,8 +21,8 @@ import reactor.core.publisher.Mono;
 public class ReplenishmentApi {
 
     private final ReplenishmentRepository replenishmentRepository;
+    private final CryptoReplenishmentSessionRepository cryptoReplenishmentSessionRepository;
     private final CryptoDataRepository cryptoDataRepository;
-    private final CryptoReplenishmentSessionRepositoryImpl cryptoReplenishmentSessionRepository;
 
     @GetMapping("/replenishment/findAllOriginalReplenishmentByIdWithLimit")
     public Flux<Replenishment> findAllOriginalReplenishmentWithLimit(
@@ -31,7 +30,7 @@ public class ReplenishmentApi {
             @RequestParam("startIndex") int startIndex,
             @RequestParam("endIndex") int endIndex
     ) {
-        return replenishmentRepository.findAllByUserIdByCreatedAtDesc(userId, startIndex, endIndex);
+        return replenishmentRepository.findAllReplenishmentByUserIdByCreatedAtDesc(userId, startIndex, endIndex);
     }
 
     @GetMapping("/cryptoReplenishmentSession/findCryptoReplenishmentSessionByUserIdAndCurrency")
@@ -43,8 +42,8 @@ public class ReplenishmentApi {
                 .findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
     }
 
-    @GetMapping("/cryptoReplenishmentSession/existsCryptoReplenishmentSessionByUserIdAndCurrency")
-    public Mono<Boolean> existsByUserIdAndCurrency(
+    @GetMapping("/cryptoReplenishmentSession/existsByUserIdAndCurrency")
+    public Mono<Boolean> existsCryptoReplenishmentSessionByUserIdAndCurrency(
             @RequestParam("userId") long userId,
             @RequestParam("currency") CryptoReplenishmentSessionCurrency currency
     ){
@@ -59,7 +58,25 @@ public class ReplenishmentApi {
         return cryptoDataRepository.findAllCryptoDataByCurrency(currency);
     }
 
+    @PostMapping("/cryptoData/save")
+    @Transactional
+    public Mono<CryptoData> saveCryptoData(@RequestBody CryptoData cryptoData){
+        return cryptoDataRepository.save(cryptoData);
+    }
+
+    @GetMapping("/cryptoData/findAllCryptoData")
+    public Flux<CryptoData> findAllCryptoData(){
+        return cryptoDataRepository.findAll();
+    }
+
+    @DeleteMapping("/cryptoData/deleteById")
+    @Transactional
+    public Mono<Void> deleteCryptoDataById(@RequestParam("id") long id){
+        return cryptoDataRepository.deleteById(id);
+    }
+
     @PostMapping("/replenishment/save")
+    @Transactional
     public Mono<Replenishment> saveReplenishment(@RequestBody Replenishment replenishment){
         return replenishmentRepository.save(replenishment);
     }
@@ -69,8 +86,9 @@ public class ReplenishmentApi {
         return cryptoReplenishmentSessionRepository.save(cryptoReplenishmentSession);
     }
 
-    @DeleteMapping("/cryptoReplenishmentSession/deleteCryptoReplenishmentSessionByUserIdAndCurrency")
-    public Mono<Boolean> deleteCryptoReplenishmentSessionById(@RequestParam("userId") long userId,
+    @DeleteMapping("/cryptoReplenishmentSession/deleteByUserIdAndCurrency")
+    @Transactional
+    public Mono<Void> deleteCryptoReplenishmentSessionById(@RequestParam("userId") long userId,
                                                            @RequestParam("currency") CryptoReplenishmentSessionCurrency currency){
         return cryptoReplenishmentSessionRepository.deleteCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
     }

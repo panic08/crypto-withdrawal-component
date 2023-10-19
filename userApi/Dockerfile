@@ -5,8 +5,6 @@ WORKDIR /app
 
 COPY . /app
 
-RUN gradle --version
-
 RUN gradle build -x test
 
 FROM openjdk:17

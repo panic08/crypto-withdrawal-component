@@ -1,6 +1,6 @@
 version: '3'
 services:
-  postgres:
+  db:
     image: postgres:latest
     environment:
       - POSTGRES_DB=users
@@ -9,7 +9,31 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - /srv/db_data:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
 
   auth:
     build:
@@ -17,7 +41,23 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - /srv/photos:/srv/photos
+      - users-photos:/srv/photos
+
+  replenishments:
+    build:
+      context: ./replenishments
+    ports:
+      - "8084:8084"
+    depends_on:
+      - kafka
+
+  cryptoreplenishmentprocess:
+    build:
+      context: ./cryptoReplenishmentProcess
+    ports:
+      - "8085:8085"
+    depends_on:
+      - kafka
 
   userapi:
     build:
@@ -25,4 +65,19 @@ services:
     ports:
       - "8081:8081"
     depends_on:
-      - postgres
+      - db
+
+  replenishmentapi:
+    build:
+      context: ./replenishmentApi
+    ports:
+      - "8083:8083"
+    depends_on:
+      - db
+volumes:
+  zookeeper-data:
+  zookeeper-log:
+  kafka-data:
+  users-photos:
+  db-data:
+

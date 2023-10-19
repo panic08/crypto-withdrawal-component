@@ -2,6 +2,7 @@ package com.casino.auth.controller;
 
 import com.casino.auth.payload.AuthorizationResponse;
 import com.casino.auth.payload.google.GoogleAuthorizationRequest;
+import com.casino.auth.payload.steam.SteamAuthorizationRequest;
 import com.casino.auth.payload.vk.VkAuthorizationRequest;
 import com.casino.auth.service.implement.OAuthServiceImpl;
 import jakarta.validation.Valid;
@@ -27,6 +28,11 @@ public class OAuthController {
         return oAuthService.handleRedirectGoogle();
     }
 
+    @GetMapping("/steam")
+    public Mono<ResponseEntity<Void>> redirectSteam(){
+        return oAuthService.handleRedirectSteam();
+    }
+
     @PostMapping("/authorizeByVk")
     public Mono<AuthorizationResponse> handleAuthorizeByVk(@Valid
                                                                 @RequestBody VkAuthorizationRequest vkAuthorizationRequest){
@@ -37,5 +43,11 @@ public class OAuthController {
     public Mono<AuthorizationResponse> handleAuthorizeByGoogle(@Valid
                                                                @RequestBody GoogleAuthorizationRequest googleAuthorizationRequest){
         return oAuthService.handleAuthorizeByGoogle(googleAuthorizationRequest);
+    }
+
+    @PostMapping("/authorizeBySteam")
+    public Mono<AuthorizationResponse> handleAuthorizeBySteam(@Valid
+                                                              @RequestBody SteamAuthorizationRequest steamAuthorizationRequest){
+        return oAuthService.handleAuthorizeBySteam(steamAuthorizationRequest);
     }
 }

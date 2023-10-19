@@ -3,23 +3,24 @@ package com.casino.auth.service.implement;
 import com.casino.auth.dto.google.GoogleAccessTokenDto;
 import com.casino.auth.dto.google.GoogleAccessTokenRequest;
 import com.casino.auth.dto.google.GoogleCertsDto;
+import com.casino.auth.dto.steam.SteamUserDto;
 import com.casino.auth.dto.vk.VkAccessTokenDto;
 import com.casino.auth.dto.vk.VkUserDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserRole;
-import com.casino.auth.mapper.GoogleAuthorizationRequestToUserActivityMapperImpl;
-import com.casino.auth.mapper.GoogleAuthorizationRequestToUserMapperImpl;
-import com.casino.auth.mapper.VkAuthorizationRequestToUserActivityMapperImpl;
-import com.casino.auth.mapper.VkAuthorizationRequestToUserMapperImpl;
+import com.casino.auth.exception.InvalidCredentialsException;
+import com.casino.auth.mapper.*;
 import com.casino.auth.model.User;
 import com.casino.auth.model.UserActivity;
 import com.casino.auth.model.UserData;
 import com.casino.auth.payload.AuthorizationResponse;
 import com.casino.auth.payload.google.GoogleAuthorizationRequest;
+import com.casino.auth.payload.steam.SteamAuthorizationRequest;
 import com.casino.auth.payload.vk.VkAuthorizationRequest;
 import com.casino.auth.property.GoogleOAuthProperty;
 import com.casino.auth.property.ServicesIpProperty;
+import com.casino.auth.property.SteamOAuthProperty;
 import com.casino.auth.property.VkOAuthProperty;
 import com.casino.auth.security.jwt.JwtUtil;
 import com.casino.auth.service.OAuthService;
@@ -60,25 +61,31 @@ public class OAuthServiceImpl implements OAuthService {
     private final VkOAuthProperty vkOAuthProperty;
     private final ServicesIpProperty servicesIpProperty;
     private final GoogleOAuthProperty googleOAuthProperty;
+    private final SteamOAuthProperty steamOAuthProperty;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final VkAuthorizationRequestToUserMapperImpl vkAuthorizationRequestToUserMapper;
     private final VkAuthorizationRequestToUserActivityMapperImpl vkAuthorizationRequestToUserActivityMapper;
     private final GoogleAuthorizationRequestToUserMapperImpl googleAuthorizationRequestToUserMapper;
     private final GoogleAuthorizationRequestToUserActivityMapperImpl googleAuthorizationRequestToUserActivityMapper;
+    private final SteamAuthorizationRequestToUserActivityMapperImpl steamAuthorizationRequestToUserActivityMapper;
+    private final SteamAuthorizationRequestToUserMapperImpl steamAuthorizationRequestToUserMapper;
     private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
             "/srv/photos/" : "D:/photos/";
     private static final String GET_VK_USER_URL = "https://api.vk.com/method/users.get";
+    private static final String GET_STEAM_USER_URL = "https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v2";
+    private static final String AUTHENTICATE_STEAM_USER_URL = "https://steamcommunity.com/openid/login";
     private static final String  GET_GOOGLE_ACCESS_TOKEN_URL = "https://www.googleapis.com/oauth2/v4/token";
     private static final String GET_VK_ACCESS_CODE_URL = "https://oauth.vk.com/access_token";
     private static final String GET_GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
     private static String SAVE_USER_URL;
     private static String EXISTS_BY_USERNAME_URL;
-    private static  String SAVE_USER_ACTIVITY_URL;
-    private static  String SAVE_USER_DATA_URL;
-    private static  String FIND_ORIGINAL_USER_BY_USERNAME_URL;
-    private static  String OAUTH_REDIRECT_VK_URL;
-    private static  String OAUTH_REDIRECT_GOOGLE_URL;
+    private static String SAVE_USER_ACTIVITY_URL;
+    private static String SAVE_USER_DATA_URL;
+    private static String FIND_ORIGINAL_USER_BY_USERNAME_URL;
+    private static String OAUTH_REDIRECT_VK_URL;
+    private static String OAUTH_REDIRECT_GOOGLE_URL;
+    private static String OAUTH_REDIRECT_STEAM_URL;
 
     @PostConstruct
     public void init() {
@@ -90,6 +97,9 @@ public class OAuthServiceImpl implements OAuthService {
                 + googleOAuthProperty.getClientId() + "&redirect_uri="
                 + googleOAuthProperty.getRedirectUrl() + "&scope="
                 + googleOAuthProperty.getScopes() + "&response_type=code";
+        OAUTH_REDIRECT_STEAM_URL = "https://steamcommunity.com/openid/login?openid.ns=http://specs.openid.net/auth/2.0&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&openid.return_to="
+                + steamOAuthProperty.getRedirectUrl() + "&openid.realm="
+                + steamOAuthProperty.getRedirectUrl() + "&openid.mode=checkid_setup";
         EXISTS_BY_USERNAME_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/user/existsByUsername";
@@ -141,24 +151,6 @@ public class OAuthServiceImpl implements OAuthService {
                                     return saveUser(user)
                                             .flatMap(savedUser -> {
                                                 long userId = savedUser.getId();
-                                                WebClient.Builder webClient = WebClient.builder();
-
-                                                Mono<Void> downloadPhoto = webClient
-                                                        .baseUrl(vkUserDto.getResponse()[0].getPhotoMax())
-                                                        .build()
-                                                        .get()
-                                                        .accept(MediaType.APPLICATION_OCTET_STREAM)
-                                                        .retrieve()
-                                                        .bodyToMono(byte[].class)
-                                                        .flatMap(imageBytes -> {
-                                                            String filePath = Paths.get(UPLOAD_DIR, userId + ".jpg").toString();
-                                                            try {
-                                                                Files.write(Paths.get(filePath), imageBytes);
-                                                                return Mono.empty();
-                                                            } catch (IOException e) {
-                                                                return Mono.error(e);
-                                                            }
-                                                        });
 
                                                 String nickname = vkUserDto.getResponse()[0].getFirstName()
                                                         + " "
@@ -184,7 +176,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                 return Mono.when(
                                                                 saveUserActivity(userActivity),
                                                                 saveUserData(userData),
-                                                                downloadPhoto
+                                                                downloadPhotoByLinkAndUserId(vkUserDto.getResponse()[0].getPhotoMax(), userId)
                                                         )
                                                         .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
                                                                 jwtUtil.generateRefreshToken(savedUser)));
@@ -252,17 +244,17 @@ public class OAuthServiceImpl implements OAuthService {
                                 if (exists){
                                     return findOriginalUserByUsername(username)
                                             .flatMap(user -> {
-                                        long userId = user.getId();
+                                                long userId = user.getId();
 
-                                        UserActivity userActivity =
+                                                UserActivity userActivity =
                                                 googleAuthorizationRequestToUserActivityMapper
                                                         .googleAuthorizationRequestToUserActivity(googleAuthorizationRequest);
 
-                                        userActivity.setUserId(userId);
+                                                userActivity.setUserId(userId);
 
-                                        return saveUserActivity(userActivity)
-                                                .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
-                                                        jwtUtil.generateRefreshToken(user)));
+                                                return saveUserActivity(userActivity)
+                                                        .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
+                                                                jwtUtil.generateRefreshToken(user)));
                                     });
                                 } else {
                                     String nickname;
@@ -287,28 +279,9 @@ public class OAuthServiceImpl implements OAuthService {
                                     user.setUsername(username);
                                     user.setPassword(bCryptPasswordEncoder.encode(HexGeneratorUtil.generateHex()));
 
-
                                     return saveUser(user)
                                             .flatMap(savedUser -> {
                                                 long userId = savedUser.getId();
-                                                WebClient.Builder webClient = WebClient.builder();
-
-                                                Mono<Void> downloadPhoto = webClient
-                                                        .baseUrl(claims.get("picture", String.class))
-                                                        .build()
-                                                        .get()
-                                                        .accept(MediaType.APPLICATION_OCTET_STREAM)
-                                                        .retrieve()
-                                                        .bodyToMono(byte[].class)
-                                                        .flatMap(imageBytes -> {
-                                                            String filePath = Paths.get(UPLOAD_DIR, userId + ".jpg").toString();
-                                                            try {
-                                                                Files.write(Paths.get(filePath), imageBytes);
-                                                                return Mono.empty();
-                                                            } catch (IOException e) {
-                                                                return Mono.error(e);
-                                                            }
-                                                        });
 
                                                 UserActivity userActivity =
                                                         googleAuthorizationRequestToUserActivityMapper
@@ -327,7 +300,8 @@ public class OAuthServiceImpl implements OAuthService {
                                                         HexGeneratorUtil.generateHex()
                                                 );
 
-                                                return Mono.when(saveUserActivity(userActivity), saveUserData(userData), downloadPhoto)
+                                                return Mono.when(saveUserActivity(userActivity), saveUserData(userData),
+                                                                downloadPhotoByLinkAndUserId(claims.get("picture", String.class), userId))
                                                         .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
                                                                 jwtUtil.generateRefreshToken(savedUser)));
                                             });
@@ -336,7 +310,75 @@ public class OAuthServiceImpl implements OAuthService {
                 });
     }
 
+    @Override
+    public Mono<AuthorizationResponse> handleAuthorizeBySteam(SteamAuthorizationRequest steamAuthorizationRequest) {
+        return authenticateSteamUser(steamAuthorizationRequest)
+                    .flatMap(s -> {
+                        if (!s.contains("true")){
+                            return Mono.error(new InvalidCredentialsException("Invalid SteamUser"));
+                        }
 
+                        return getSteamUserBySteamid(steamAuthorizationRequest.getOpenidIdentity().split("https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F")[1]);
+                    })
+                .flatMap(steamUserDto -> existsByUsername(steamUserDto.getResponse().getPlayers()[0].getSteamId() + "_steam")
+                        .flatMap(exists -> {
+                            String username = steamUserDto.getResponse().getPlayers()[0].getSteamId() + "_steam";
+
+                            if (exists){
+                                return findOriginalUserByUsername(username)
+                                        .flatMap(user -> {
+                                            long userId = user.getId();
+
+                                            UserActivity userActivity =
+                                                    steamAuthorizationRequestToUserActivityMapper
+                                                            .steamAuthorizationRequestToUserActivity(steamAuthorizationRequest);
+
+                                            userActivity.setUserId(userId);
+
+                                            return saveUserActivity(userActivity)
+                                                    .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
+                                                            jwtUtil.generateRefreshToken(user)));
+                                        });
+                            } else {
+                                User user =
+                                        steamAuthorizationRequestToUserMapper
+                                                .steamAuthorizationRequestToUser(steamAuthorizationRequest);
+
+                                user.setUsername(username);
+                                user.setPassword(bCryptPasswordEncoder.encode(HexGeneratorUtil.generateHex()));
+
+                                return saveUser(user)
+                                        .flatMap(savedUser -> {
+                                            long userId = savedUser.getId();
+
+                                            UserActivity userActivity =
+                                                    steamAuthorizationRequestToUserActivityMapper
+                                                            .steamAuthorizationRequestToUserActivity(steamAuthorizationRequest);
+
+                                            userActivity.setUserId(userId);
+
+                                            UserData userData = new UserData(
+                                                    null,
+                                                    userId,
+                                                    UserDataProfileType.PUBLIC,
+                                                    steamUserDto.getResponse().getPlayers()[0].getPersonaName(),
+                                                    0L,
+                                                    UserDataRank.NEWBIE,
+                                                    HexGeneratorUtil.generateHex(),
+                                                    HexGeneratorUtil.generateHex()
+                                            );
+
+                                            return Mono.when(saveUserActivity(userActivity), saveUserData(userData),
+                                                            downloadPhotoByLinkAndUserId(steamUserDto.getResponse().getPlayers()[0].getAvatarFull(), userId))
+                                                    .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
+                                                            jwtUtil.generateRefreshToken(savedUser)));
+
+                                        });
+                            }
+
+
+                        }));
+    }
 
     @Override
     public Mono<ResponseEntity<Void>> handleRedirectVK() {
@@ -358,6 +400,15 @@ public class OAuthServiceImpl implements OAuthService {
         });
     }
 
+    @Override
+    public Mono<ResponseEntity<Void>> handleRedirectSteam() {
+        return Mono.fromSupplier(() -> {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setLocation(URI.create(OAUTH_REDIRECT_STEAM_URL));
+
+            return new ResponseEntity<>(headers, HttpStatus.MOVED_PERMANENTLY);
+        });
+    }
 
     private Mono<VkAccessTokenDto> getVKAccessTokenByCode(String code){
         WebClient.Builder webClient = WebClient.builder();
@@ -381,11 +432,13 @@ public class OAuthServiceImpl implements OAuthService {
                 .build()
                 .get()
                 .retrieve()
-                .bodyToMono(VkUserDto.class);
+                .bodyToMono(VkUserDto.class)
+                .cache();
     }
 
     private Mono<GoogleAccessTokenDto> getGoogleAccessTokenDtoByGoogleAccessTokenRequest(GoogleAccessTokenRequest googleAccessTokenRequest){
         WebClient.Builder webClient = WebClient.builder();
+
         return webClient
                 .baseUrl(GET_GOOGLE_ACCESS_TOKEN_URL)
                 .build()
@@ -395,9 +448,71 @@ public class OAuthServiceImpl implements OAuthService {
                 .bodyToMono(GoogleAccessTokenDto.class);
     }
 
-    private Mono<GoogleCertsDto> getGoogleCerts(){
+    private Mono<Void> downloadPhotoByLinkAndUserId(String link, long userId){
         WebClient.Builder webClient = WebClient.builder();
+
         return webClient
+                .baseUrl(link)
+                .build()
+                .get()
+                .accept(MediaType.APPLICATION_OCTET_STREAM)
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .flatMap(imageBytes -> {
+                    String filePath = Paths.get(UPLOAD_DIR, userId + ".jpg").toString();
+                    try {
+                        Files.write(Paths.get(filePath), imageBytes);
+                        return Mono.empty();
+                    } catch (IOException e) {
+                        return Mono.error(e);
+                    }
+                });
+    }
+
+    private Mono<SteamUserDto> getSteamUserBySteamid(String steamid){
+        WebClient.Builder webClient = WebClient.builder();
+
+        return webClient
+                .baseUrl(GET_STEAM_USER_URL + "?key="
+                + steamOAuthProperty.getClientSecret()
+                + "&steamids="
+                + steamid)
+                .build()
+                .get()
+                .retrieve()
+                .bodyToMono(SteamUserDto.class);
+    }
+
+    private Mono<String> authenticateSteamUser(SteamAuthorizationRequest steamAuthorizationRequest){
+        WebClient.Builder webClient = WebClient.builder();
+
+        return webClient.baseUrl(URLDecoder.decode(AUTHENTICATE_STEAM_USER_URL + "?openid.ns="
+                        + steamAuthorizationRequest.getOpenidNs()
+                        + "&openid.mode=check_authentication"
+                        + "&openid.op_endpoint="
+                        + steamAuthorizationRequest.getOpenidOpEndpoint()
+                        + "&openid.claimed_id="
+                        + steamAuthorizationRequest.getOpenidClaimedId()
+                        + "&openid.identity="
+                        + steamAuthorizationRequest.getOpenidIdentity()
+                        + "&openid.return_to="
+                        + steamAuthorizationRequest.getOpenidReturnTo()
+                        + "&openid.response_nonce="
+                        + steamAuthorizationRequest.getOpenidResponseNonce()
+                        + "&openid.assoc_handle="
+                        + steamAuthorizationRequest.getOpenidAssocHandle()
+                        + "&openid.signed="
+                        + steamAuthorizationRequest.getOpenidSigned()
+                        + "&openid.sig="
+                        + steamAuthorizationRequest.getOpenidSig(), StandardCharsets.UTF_8))
+                .build()
+                .get()
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+
+    private Mono<GoogleCertsDto> getGoogleCerts(){
+        return WebClient.builder()
                 .baseUrl(GET_GOOGLE_CERTS_URL)
                 .build()
                 .get()

@@ -11,6 +11,5 @@ import org.springframework.stereotype.Component;
 @Setter
 public class ServicesIpProperty {
     private String userApiIp;
-    private String authIp;
     private String replenishmentApiIp;
 }

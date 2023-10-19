@@ -11,7 +11,7 @@ import reactor.core.publisher.Flux;
 public interface ReplenishmentRepository extends ReactiveCrudRepository<Replenishment, Long> {
     @Query("SELECT r.* FROM replenishments_table r WHERE r.user_id = :user_id ORDER BY r.created_at" +
             " DESC LIMIT :end_index OFFSET :start_index")
-    Flux<Replenishment> findAllByUserIdByCreatedAtDesc(@Param("user_id") long userId,
+    Flux<Replenishment> findAllReplenishmentByUserIdByCreatedAtDesc(@Param("user_id") long userId,
                                                        @Param("start_index") int startIndex,
                                                        @Param("end_index") int endIndex);
 }

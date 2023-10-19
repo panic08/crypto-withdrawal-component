@@ -74,8 +74,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             User user = authorizationRequestToUserMapper
                     .authorizationRequestToUser(authorizationRequest);
 
-            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
             user.setRole(UserRole.DEFAULT);
+            user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 
             return user;
         }).flatMap(user -> existsByUsername(user.getUsername())
@@ -142,16 +142,14 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    public Mono<UserDto> getUserInfoByAccessToken(String authorization) {
-        return Mono.fromCallable(() -> jwtUtil.extractIdFromAccessToken(authorization.split(" ")[1]))
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
-                .flatMap(this::findUserById);
+    public Mono<UserDto> getUserInfo(long id) {
+        return findUserById(id);
     }
 
     @Override
     public Mono<AuthorizationResponse> handleRefreshAccessToken(String authorization) {
         return Mono.fromCallable(() -> jwtUtil.extractIdFromRefreshToken(authorization.split(" ")[1]))
-                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect token")))
+                .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect refresh token")))
                 .flatMap(this::findOriginalUserById)
                 .map(user -> new AuthorizationResponse(jwtUtil.generateAccessToken(user), null));
     }
@@ -206,7 +204,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     private Mono<User> findOriginalUserById(long id){
-        return WebClient.builder()
+        return webClient
                 .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()

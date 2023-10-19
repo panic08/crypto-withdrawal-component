@@ -4,6 +4,6 @@ public enum CryptoReplenishmentSessionCurrency {
     TRX,
     BTC,
     ETH,
+    BSC,
     USDT_TRC20,
-    USDT_ERC20
 }

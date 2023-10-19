@@ -8,6 +8,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -25,8 +26,6 @@ public class JwtUtil {
 
         claims.put("name", user.getUsername());
         claims.put("registered_at", user.getRegisteredAt());
-        claims.put("account_non_locked", user.getIsAccountNonLocked());
-        claims.put("role", user.getRole());
 
         return createAccessToken(claims, user.getId());
     }
@@ -39,6 +38,10 @@ public class JwtUtil {
 
     public Long extractIdFromAccessToken(String token){
         return extractAccessClaim(token, claims -> Long.parseLong(claims.getSubject()));
+    }
+
+    public String extractNameFromAccessToken(String token){
+        return extractAccessClaim(token, claims -> claims.get("name")).toString();
     }
 
     public Long extractIdFromRefreshToken(String token){
@@ -65,7 +68,7 @@ public class JwtUtil {
 
     private String createAccessToken(Map<String, Object> claims, long subject){
             Date dateNow = new Date();
-            Date expirationDate = new Date(dateNow.getTime() + 1000 * 60 * 60 * 12);
+            Date expirationDate = new Date(dateNow.getTime() + 1000 * 60 * 60);
 
             byte[] signingKeyBytes = jwtSecret.getBytes();
 

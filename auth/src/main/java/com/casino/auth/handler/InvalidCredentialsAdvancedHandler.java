@@ -16,16 +16,7 @@ public class InvalidCredentialsAdvancedHandler  {
     @ResponseBody
     @ResponseStatus(HttpStatus.CONFLICT)
     @ExceptionHandler(InvalidCredentialsException.class)
-    public Mono<HashMap<Object, Object>> handleInvalidCredentialsException(InvalidCredentialsException invalidCredentialsException){
-        return Mono.fromCallable(() -> {
-            HashMap<Object, Object> hashMap = new HashMap<>();
-
-            hashMap.put("timestamp", new Date());
-            hashMap.put("status", 409);
-            hashMap.put("error", "Conflict");
-            hashMap.put("message", invalidCredentialsException.getMessage());
-
-            return hashMap;
-        });
+    public Mono<Void> handleInvalidCredentialsException(InvalidCredentialsException invalidCredentialsException){
+        return Mono.empty();
     }
 }

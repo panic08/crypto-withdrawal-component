@@ -16,21 +16,21 @@ public interface UserDataRepository extends ReactiveCrudRepository<UserData, Lon
 
     @Modifying
     @Query("UPDATE users_data_table SET server_seed = :serverSeed WHERE user_id = :userId")
-    Mono<Void> updateServerSeedById(@Param("serverSeed") String serverSeed,
+    Mono<Void> updateServerSeedByUserId(@Param("serverSeed") String serverSeed,
                                             @Param("userId") long userId);
     @Modifying
     @Query("UPDATE users_data_table SET client_seed = :clientSeed WHERE user_id = :userId")
-    Mono<Void> updateClientSeedById(@Param("serverSeed") String clientSeed,
+    Mono<Void> updateClientSeedByUserId(@Param("serverSeed") String clientSeed,
                                           @Param("userId") long userId);
 
     @Modifying
     @Query("UPDATE users_data_table SET profile_type = :profileType WHERE user_id = :userId")
-    Mono<Void> updateProfileTypeById(@Param("profileType") UserDataProfileType profileType,
+    Mono<Void> updateProfileTypeByUserId(@Param("profileType") UserDataProfileType profileType,
                                      @Param("userId") long userId);
 
     @Modifying
     @Query("UPDATE users_data_table SET balance = :balance WHERE user_id = :userId")
-    Mono<Void> updateBalanceById(@Param("balance") long balance,
+    Mono<Void> updateBalanceByUserId(@Param("balance") long balance,
                                     @Param("userId") long userId);
 
 }

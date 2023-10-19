@@ -1,15 +1,15 @@
 package com.casino.auth.controller;
 
 import com.casino.auth.dto.PublishUserDto;
-import com.casino.auth.dto.UserDto;
+import com.casino.auth.payload.ChangeBalancePayload;
+import com.casino.auth.payload.ChangeIsAccountNonLockedPayload;
 import com.casino.auth.service.implement.UserServiceImpl;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 @RestController

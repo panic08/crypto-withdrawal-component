@@ -7,17 +7,29 @@
         <processorPath useClasspath="false">
           <entry name="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.projectlombok/lombok/1.18.30/f195ee86e6c896ea47a1d39defbe20eb59cd149d/lombok-1.18.30.jar" />
         </processorPath>
-        <module name="userApi.main" />
+        <module name="replenishmentApi.main" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="auth.aot" target="17" />
       <module name="auth.aotTest" target="17" />
+      <module name="cryptoReplenishmentProcess.aot" target="17" />
+      <module name="cryptoReplenishmentProcess.aotTest" target="17" />
+      <module name="financeAdpi" target="17" />
+      <module name="financeApi" target="17" />
+      <module name="financeApi.aot" target="17" />
+      <module name="financeApi.aotTest" target="17" />
+      <module name="financeApi.main" target="17" />
+      <module name="financeApi.test" target="17" />
+      <module name="replenishmentApi.aot" target="17" />
+      <module name="replenishmentApi.aotTest" target="17" />
       <module name="replenishmentCreate" target="17" />
       <module name="replenishmentCreate.aot" target="17" />
       <module name="replenishmentCreate.aotTest" target="17" />
       <module name="replenishmentCreate.main" target="17" />
       <module name="replenishmentCreate.test" target="17" />
+      <module name="replenishments.aot" target="17" />
+      <module name="replenishments.aotTest" target="17" />
       <module name="userApi.aot" target="17" />
       <module name="userApi.aotTest" target="17" />
     </bytecodeTargetLevel>

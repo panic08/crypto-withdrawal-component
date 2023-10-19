@@ -8,5 +8,5 @@ public interface CryptoReplenishmentService {
     Mono<Void> handleEthCryptoReplenishment(CryptoReplenishmentMessage cryptoReplenishmentMessage);
     Mono<Void> handleBtcCryptoReplenishment(CryptoReplenishmentMessage cryptoReplenishmentMessage);
     Mono<Void> handleUsdtTrc20CryptoReplenishment(CryptoReplenishmentMessage cryptoReplenishmentMessage);
-    Mono<Void> handleUsdtErc20CryptoReplenishment(CryptoReplenishmentMessage cryptoReplenishmentMessage);
+    Mono<Void> handleBscCryptoReplenishment(CryptoReplenishmentMessage cryptoReplenishmentMessage);
 }

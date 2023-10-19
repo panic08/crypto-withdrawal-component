@@ -1,5 +1,6 @@
 package com.casino.cryptoreplenishmentprocess.dto.tron;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -63,8 +64,13 @@ public class TrxTransactionsDto {
     @Setter
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public static class Value{
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private String data;
+        @JsonInclude(JsonInclude.Include.NON_NULL)
         private long amount;
         private String ownerAddress;
         private String toAddress;
+        @JsonInclude(JsonInclude.Include.NON_NULL)
+        private String contractAddress;
     }
 }

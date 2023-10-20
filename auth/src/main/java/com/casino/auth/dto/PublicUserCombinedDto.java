@@ -17,10 +17,10 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-public class PublishUserDto {
+public class PublicUserCombinedDto {
     private long id;
     private String username;
-    private PublishUserData userData;
+    private PublicUserDataDto userData;
     @JsonProperty("account_non_locked")
     private boolean isAccountNonLocked;
     private UserRole role;
@@ -32,9 +32,7 @@ public class PublishUserDto {
     @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-    public static class PublishUserData{
-        private Long id;
-        private Long userId;
+    public static class PublicUserDataDto{
         private UserDataProfileType profileType;
         private String nickname;
         private Long balance;

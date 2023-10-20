@@ -1,5 +1,6 @@
 package com.casino.replenishments.controller;
 
+import com.casino.replenishments.dto.CryptoDataDto;
 import com.casino.replenishments.model.CryptoData;
 import com.casino.replenishments.payload.CryptoDataCreatePayload;
 import com.casino.replenishments.service.implement.CryptoDataServiceImpl;
@@ -16,7 +17,7 @@ public class CryptoDataController {
     private final CryptoDataServiceImpl cryptoDataService;
 
     @GetMapping("/getAll")
-    public Flux<CryptoData> getAll(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken){
+    public Flux<CryptoDataDto> getAll(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken){
         return cryptoDataService.getAllCryptoData(Long.parseLong(usernamePasswordAuthenticationToken.getName()));
     }
     @PostMapping

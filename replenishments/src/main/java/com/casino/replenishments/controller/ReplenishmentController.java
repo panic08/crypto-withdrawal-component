@@ -1,5 +1,6 @@
 package com.casino.replenishments.controller;
 
+import com.casino.replenishments.dto.ReplenishmentDto;
 import com.casino.replenishments.model.Replenishment;
 import com.casino.replenishments.service.implement.ReplenishmentServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,9 @@ public class ReplenishmentController {
 
     private final ReplenishmentServiceImpl replenishmentService;
     @GetMapping("/getAll")
-    public Flux<Replenishment> getAll(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
-                                      @RequestParam("startIndex") int startIndex,
-                                      @RequestParam("endIndex") int endIndex){
+    public Flux<ReplenishmentDto> getAll(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
+                                         @RequestParam("startIndex") int startIndex,
+                                         @RequestParam("endIndex") int endIndex){
         return replenishmentService.getAllReplenishment(Long.parseLong(usernamePasswordAuthenticationToken.getName()), startIndex, endIndex);
     }
 }

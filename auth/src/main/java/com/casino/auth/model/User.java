@@ -1,8 +1,6 @@
 package com.casino.auth.model;
 
 import com.casino.auth.enums.UserRole;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,11 +8,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 
 
-@Getter
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class User implements UserDetails {
     private Long id;
     private String username;

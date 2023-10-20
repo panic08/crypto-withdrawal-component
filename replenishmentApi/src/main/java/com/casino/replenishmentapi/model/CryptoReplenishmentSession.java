@@ -1,8 +1,6 @@
 package com.casino.replenishmentapi.model;
 
 import com.casino.replenishmentapi.enums.CryptoReplenishmentSessionCurrency;
-import com.fasterxml.jackson.databind.PropertyNamingStrategies;
-import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -10,7 +8,6 @@ import org.springframework.data.relational.core.mapping.Table;
 
 @Table(name = "crypto_replenishment_sessions_table")
 @Data
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class CryptoReplenishmentSession {
     @Id
     @Column("id")

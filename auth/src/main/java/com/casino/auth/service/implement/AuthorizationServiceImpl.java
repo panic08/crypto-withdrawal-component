@@ -1,6 +1,6 @@
 package com.casino.auth.service.implement;
 
-import com.casino.auth.dto.UserDto;
+import com.casino.auth.dto.UserCombinedDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
 import com.casino.auth.enums.UserRole;
@@ -9,8 +9,10 @@ import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.exception.UserAlreadyExistsException;
 import com.casino.auth.mapper.AuthorizationRequestToUserActivityMapperImpl;
 import com.casino.auth.mapper.AuthorizationRequestToUserMapperImpl;
+import com.casino.auth.mapper.UserCombinedToUserCombinedDtoMapperImpl;
 import com.casino.auth.model.User;
 import com.casino.auth.model.UserActivity;
+import com.casino.auth.model.UserCombined;
 import com.casino.auth.model.UserData;
 import com.casino.auth.payload.AuthorizationRequest;
 import com.casino.auth.payload.AuthorizationResponse;
@@ -34,18 +36,19 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthorizationRequestToUserMapperImpl authorizationRequestToUserMapper;
     private final AuthorizationRequestToUserActivityMapperImpl authorizationRequestToUserActivityMapper;
+    private final UserCombinedToUserCombinedDtoMapperImpl userCombinedToUserCombinedDtoMapper;
     private final ServicesIpProperty servicesIpProperty;
-    private static String EXISTS_BY_USERNAME_URL;
+    private static String EXISTS_USER_BY_USERNAME_URL;
     private static String SAVE_USER_URL;
     private static String SAVE_USER_ACTIVITY_URL;
     private static String SAVE_USER_DATA_URL;
-    private static String FIND_ORIGINAL_USER_BY_USERNAME_URL;
-    private static String FIND_ORIGINAL_USER_BY_ID_URL;
+    private static String FIND_USER_BY_USERNAME_URL;
     private static String FIND_USER_BY_ID_URL;
+    private static String FIND_USERCOMBINED_BY_ID_URL;
 
     @PostConstruct
     public void init() {
-        EXISTS_BY_USERNAME_URL = "http://"
+        EXISTS_USER_BY_USERNAME_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/user/existsByUsername";
         SAVE_USER_URL = "http://"
@@ -57,15 +60,15 @@ public class AuthorizationServiceImpl implements AuthorizationService {
         SAVE_USER_DATA_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/userData/save";
-        FIND_ORIGINAL_USER_BY_USERNAME_URL = "http://"
+        FIND_USER_BY_USERNAME_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findOriginalUserByUsername";
+                + ":8081/api/user/findUserByUsername";
+        FIND_USERCOMBINED_BY_ID_URL = "http://"
+                + servicesIpProperty.getUserApiIp()
+                + ":8081/api/userCombined/findUserCombinedById";
         FIND_USER_BY_ID_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/user/findUserById";
-        FIND_ORIGINAL_USER_BY_ID_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findOriginalUserById";
     }
 
     @Override
@@ -118,7 +121,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     public Mono<AuthorizationResponse> handleLogin(AuthorizationRequest authorizationRequest) {
-        Mono<User> userMono = findOriginalUserByUsername(authorizationRequest.getUsername());
+        Mono<User> userMono = findUserByUsername(authorizationRequest.getUsername());
 
         return userMono.flatMap(user -> {
             if (!bCryptPasswordEncoder.matches(authorizationRequest.getPassword(), user.getPassword())){
@@ -142,21 +145,21 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    public Mono<UserDto> getUserInfo(long id) {
-        return findUserById(id);
+    public Mono<UserCombinedDto> getUserInfo(long id) {
+        return findUserCombinedById(id).flatMap(userCombined -> Mono.just(userCombinedToUserCombinedDtoMapper.userCombinedToUserCombinedDto(userCombined)));
     }
 
     @Override
     public Mono<AuthorizationResponse> handleRefreshAccessToken(String authorization) {
         return Mono.fromCallable(() -> jwtUtil.extractIdFromRefreshToken(authorization.split(" ")[1]))
                 .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect refresh token")))
-                .flatMap(this::findOriginalUserById)
+                .flatMap(this::findUserById)
                 .map(user -> new AuthorizationResponse(jwtUtil.generateAccessToken(user), null));
     }
 
-    private Mono<User> findOriginalUserByUsername(String username){
+    private Mono<User> findUserByUsername(String username){
         return webClient
-                .baseUrl(FIND_ORIGINAL_USER_BY_USERNAME_URL + "?username=" + username)
+                .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + username)
                 .build()
                 .get()
                 .retrieve()
@@ -165,7 +168,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     private Mono<Boolean> existsByUsername(String username){
         return webClient
-                .baseUrl(EXISTS_BY_USERNAME_URL + "?username=" + username)
+                .baseUrl(EXISTS_USER_BY_USERNAME_URL + "?username=" + username)
                 .build()
                 .get()
                 .retrieve()
@@ -183,13 +186,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 .cache();
     }
 
-    private Mono<UserDto> findUserById(long id){
+    private Mono<UserCombined> findUserCombinedById(long id){
         return webClient
-                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
+                .baseUrl(FIND_USERCOMBINED_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()
                 .retrieve()
-                .bodyToMono(UserDto.class);
+                .bodyToMono(UserCombined.class);
     }
 
     private Mono<UserData> saveUserData(UserData userData){
@@ -203,9 +206,9 @@ public class AuthorizationServiceImpl implements AuthorizationService {
                 .cache();
     }
 
-    private Mono<User> findOriginalUserById(long id){
+    private Mono<User> findUserById(long id){
         return webClient
-                .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
+                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()
                 .retrieve()

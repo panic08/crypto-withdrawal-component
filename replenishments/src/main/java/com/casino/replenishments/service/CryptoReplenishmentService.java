@@ -1,5 +1,6 @@
 package com.casino.replenishments.service;
 
+import com.casino.replenishments.dto.CryptoReplenishmentSessionDto;
 import com.casino.replenishments.enums.CryptoReplenishmentSessionCurrency;
 import com.casino.replenishments.model.CryptoReplenishmentSession;
 import com.casino.replenishments.payload.children.*;
@@ -7,8 +8,8 @@ import com.casino.replenishments.payload.CryptoReplenishmentResponse;
 import reactor.core.publisher.Mono;
 
 public interface CryptoReplenishmentService {
-    Mono<CryptoReplenishmentSession> getCryptoReplenishmentSession(long userId,
-                                                                   CryptoReplenishmentSessionCurrency currency);
+    Mono<CryptoReplenishmentSessionDto> getCryptoReplenishmentSession(long userId,
+                                                                      CryptoReplenishmentSessionCurrency currency);
 
     Mono<Void> deleteCryptoReplenishmentSession(long userId,
                                                 CryptoReplenishmentSessionCurrency currency);

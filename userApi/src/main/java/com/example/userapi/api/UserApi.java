@@ -1,6 +1,6 @@
 package com.example.userapi.api;
 
-import com.example.userapi.dto.UserDto;
+import com.example.userapi.model.UserCombined;
 import com.example.userapi.enums.UserDataProfileType;
 import com.example.userapi.model.User;
 import com.example.userapi.model.UserActivity;
@@ -25,8 +25,8 @@ public class UserApi {
     private final UserDataRepository userDataRepository;
     private final UserRepository userRepository;
 
-    @GetMapping("/user/findUserByUsername")
-    public Mono<UserDto> findUserByUsername(@RequestParam("username") String username) {
+    @GetMapping("/userCombined/findUserCombinedByUsername")
+    public Mono<UserCombined> findUserCombinedByUsername(@RequestParam("username") String username) {
         Mono<User> userMono = userRepository.findUserByUsername(username);
 
         return userMono.flatMap(user -> {
@@ -38,23 +38,23 @@ public class UserApi {
                         List<UserActivity> userActivity = tuple.getT1();
                         UserData userData = tuple.getT2();
 
-                        UserDto userDto = new UserDto();
-                        userDto.setId(user.getId());
-                        userDto.setUsername(user.getUsername());
-                        userDto.setPassword(user.getPassword());
-                        userDto.setRole(user.getRole());
-                        userDto.setUserActivity(userActivity);
-                        userDto.setUserData(userData);
-                        userDto.setIsAccountNonLocked(user.getIsAccountNonLocked());
-                        userDto.setRegisteredAt(user.getRegisteredAt());
+                        UserCombined userCombined = new UserCombined();
+                        userCombined.setId(user.getId());
+                        userCombined.setUsername(user.getUsername());
+                        userCombined.setPassword(user.getPassword());
+                        userCombined.setRole(user.getRole());
+                        userCombined.setUserActivity(userActivity);
+                        userCombined.setUserData(userData);
+                        userCombined.setIsAccountNonLocked(user.getIsAccountNonLocked());
+                        userCombined.setRegisteredAt(user.getRegisteredAt());
 
-                        return userDto;
+                        return userCombined;
                     });
         });
     }
 
-    @GetMapping("/user/findUserById")
-    public Mono<UserDto> findUserById(@RequestParam("id") long id) {
+    @GetMapping("/userCombined/findUserCombinedById")
+    public Mono<UserCombined> findUserCombinedById(@RequestParam("id") long id) {
         Mono<User> userMono = userRepository.findById(id);
 
         return userMono.flatMap(user -> {
@@ -66,17 +66,17 @@ public class UserApi {
                         List<UserActivity> userActivity = tuple.getT1();
                         UserData userData = tuple.getT2();
 
-                        UserDto userDto = new UserDto();
-                        userDto.setId(user.getId());
-                        userDto.setUsername(user.getUsername());
-                        userDto.setPassword(user.getPassword());
-                        userDto.setUserActivity(userActivity);
-                        userDto.setUserData(userData);
-                        userDto.setIsAccountNonLocked(user.getIsAccountNonLocked());
-                        userDto.setRole(user.getRole());
-                        userDto.setRegisteredAt(user.getRegisteredAt());
+                        UserCombined userCombined = new UserCombined();
+                        userCombined.setId(user.getId());
+                        userCombined.setUsername(user.getUsername());
+                        userCombined.setPassword(user.getPassword());
+                        userCombined.setUserActivity(userActivity);
+                        userCombined.setUserData(userData);
+                        userCombined.setIsAccountNonLocked(user.getIsAccountNonLocked());
+                        userCombined.setRole(user.getRole());
+                        userCombined.setRegisteredAt(user.getRegisteredAt());
 
-                        return userDto;
+                        return userCombined;
                     });
         });
     }
@@ -86,13 +86,13 @@ public class UserApi {
         return userDataRepository.findByUserId(userId);
     }
 
-    @GetMapping("/user/findOriginalUserByUsername")
-    public Mono<User> findOriginalUserByUsername(@RequestParam("username") String username){
+    @GetMapping("/user/findUserByUsername")
+    public Mono<User> findUserByUsername(@RequestParam("username") String username){
         return userRepository.findUserByUsername(username);
     }
 
-    @GetMapping("/user/findOriginalUserById")
-    public Mono<User> findOriginalUserById(@RequestParam("id") long id){
+    @GetMapping("/user/findUserById")
+    public Mono<User> findUserById(@RequestParam("id") long id){
         return userRepository.findById(id);
     }
 

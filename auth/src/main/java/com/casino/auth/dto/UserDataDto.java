@@ -1,15 +1,17 @@
-package com.casino.auth.model;
+package com.casino.auth.dto;
 
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import lombok.*;
 
-@Data
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserData {
-    private Long id;
-    private Long userId;
+@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+public class UserDataDto {
     private UserDataProfileType profileType;
     private String nickname;
     private Long balance;

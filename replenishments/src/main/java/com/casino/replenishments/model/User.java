@@ -12,7 +12,6 @@ import java.util.Collection;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class User implements UserDetails {
     private Long id;
     private String username;

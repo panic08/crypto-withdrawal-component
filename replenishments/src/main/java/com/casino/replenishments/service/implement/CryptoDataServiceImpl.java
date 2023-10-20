@@ -1,8 +1,11 @@
 package com.casino.replenishments.service.implement;
 
+import com.casino.replenishments.dto.CryptoDataDto;
 import com.casino.replenishments.enums.UserRole;
 import com.casino.replenishments.exception.UnauthorizedRoleException;
 import com.casino.replenishments.mapper.CryptoDataCreatePayloadToCryptoDataMapperImpl;
+import com.casino.replenishments.mapper.CryptoDataToCryptoDataDtoMapper;
+import com.casino.replenishments.mapper.CryptoDataToCryptoDataDtoMapperImpl;
 import com.casino.replenishments.model.CryptoData;
 import com.casino.replenishments.model.User;
 import com.casino.replenishments.payload.CryptoDataCreatePayload;
@@ -22,15 +25,16 @@ public class CryptoDataServiceImpl implements CryptoDataService {
     private final ServicesIpProperty servicesIpProperty;
     private final WebClient.Builder webClient;
     private final CryptoDataCreatePayloadToCryptoDataMapperImpl cryptoDataCreatePayloadToCryptoDataMapper;
-    private static String FIND_ORIGINAL_USER_BY_ID_URL;
+    private final CryptoDataToCryptoDataDtoMapperImpl cryptoDataToCryptoDataDtoMapper;
+    private static String FIND_USER_BY_ID_URL;
     private static String FIND_ALL_CRYPTO_DATA_URL;
     private static String DELETE_CRYPTO_DATA_BY_ID_URL;
 
     @PostConstruct
     public void init() {
-        FIND_ORIGINAL_USER_BY_ID_URL = "http://"
+        FIND_USER_BY_ID_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findOriginalUserById";
+                + ":8081/api/user/findUserById";
         SAVE_CRYPTO_DATA_URL = "http://"
                 + servicesIpProperty.getReplenishmentApiIp()
                 + ":8083/api/cryptoData/save";
@@ -44,7 +48,7 @@ public class CryptoDataServiceImpl implements CryptoDataService {
 
     @Override
     public Mono<CryptoDataCreatePayload> createCryptoData(long userId, CryptoDataCreatePayload cryptoDataCreatePayload) {
-        return findOriginalUserById(userId)
+        return findUserById(userId)
                 .flatMap(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
                         return saveCryptoData(cryptoDataCreatePayloadToCryptoDataMapper
@@ -57,11 +61,11 @@ public class CryptoDataServiceImpl implements CryptoDataService {
     }
 
     @Override
-    public Flux<CryptoData> getAllCryptoData(long userId) {
-        return findOriginalUserById(userId)
+    public Flux<CryptoDataDto> getAllCryptoData(long userId) {
+        return findUserById(userId)
                 .flatMapMany(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
-                        return findAllCryptoData();
+                        return findAllCryptoData().flatMap(cryptoData -> Mono.just(cryptoDataToCryptoDataDtoMapper.cryptoDataToCryptoDataDto(cryptoData)));
                     } else {
                         return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
                     }
@@ -70,7 +74,7 @@ public class CryptoDataServiceImpl implements CryptoDataService {
 
     @Override
     public Mono<Void> deleteCryptoData(long userId, long id) {
-        return findOriginalUserById(userId)
+        return findUserById(userId)
                 .flatMap(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
                         return deleteCryptoDataById(id);
@@ -80,9 +84,9 @@ public class CryptoDataServiceImpl implements CryptoDataService {
                 });
     }
 
-    private Mono<User> findOriginalUserById(long id){
+    private Mono<User> findUserById(long id){
         return webClient
-                .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
+                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()
                 .retrieve()

@@ -24,8 +24,8 @@ public class ReplenishmentApi {
     private final CryptoReplenishmentSessionRepository cryptoReplenishmentSessionRepository;
     private final CryptoDataRepository cryptoDataRepository;
 
-    @GetMapping("/replenishment/findAllOriginalReplenishmentByIdWithLimit")
-    public Flux<Replenishment> findAllOriginalReplenishmentWithLimit(
+    @GetMapping("/replenishment/findAllReplenishmentByIdWithLimit")
+    public Flux<Replenishment> findAllReplenishmentWithLimit(
             @RequestParam("userId") long userId,
             @RequestParam("startIndex") int startIndex,
             @RequestParam("endIndex") int endIndex

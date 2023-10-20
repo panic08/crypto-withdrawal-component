@@ -1,5 +1,6 @@
 package com.casino.replenishments.controller;
 
+import com.casino.replenishments.dto.CryptoReplenishmentSessionDto;
 import com.casino.replenishments.enums.CryptoReplenishmentSessionCurrency;
 import com.casino.replenishments.model.CryptoReplenishmentSession;
 import com.casino.replenishments.payload.children.*;
@@ -18,8 +19,8 @@ public class CryptoReplenishmentController {
 
     private final CryptoReplenishmentServiceImpl cryptoReplenishmentService;
     @GetMapping
-    public Mono<CryptoReplenishmentSession> get(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
-                                                @RequestParam("currency") CryptoReplenishmentSessionCurrency currency){
+    public Mono<CryptoReplenishmentSessionDto> get(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
+                                                   @RequestParam("currency") CryptoReplenishmentSessionCurrency currency){
         return cryptoReplenishmentService.getCryptoReplenishmentSession(Long.parseLong(usernamePasswordAuthenticationToken.getName()), currency);
     }
 

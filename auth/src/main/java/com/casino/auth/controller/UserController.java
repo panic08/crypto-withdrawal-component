@@ -1,14 +1,10 @@
 package com.casino.auth.controller;
 
-import com.casino.auth.dto.PublishUserDto;
-import com.casino.auth.payload.ChangeBalancePayload;
-import com.casino.auth.payload.ChangeIsAccountNonLockedPayload;
+import com.casino.auth.dto.PublicUserCombinedDto;
 import com.casino.auth.service.implement.UserServiceImpl;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
@@ -20,7 +16,7 @@ public class UserController {
     private final UserServiceImpl userService;
 
     @GetMapping("/{id}")
-    public Mono<PublishUserDto> get(@PathVariable("id") long id){
+    public Mono<PublicUserCombinedDto> get(@PathVariable("id") long id){
         return userService.getUserById(id);
     }
 

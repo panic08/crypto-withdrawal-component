@@ -8,7 +8,6 @@ import com.casino.auth.dto.vk.VkAccessTokenDto;
 import com.casino.auth.dto.vk.VkUserDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
-import com.casino.auth.enums.UserRole;
 import com.casino.auth.exception.InvalidCredentialsException;
 import com.casino.auth.mapper.*;
 import com.casino.auth.model.User;
@@ -82,7 +81,7 @@ public class OAuthServiceImpl implements OAuthService {
     private static String EXISTS_BY_USERNAME_URL;
     private static String SAVE_USER_ACTIVITY_URL;
     private static String SAVE_USER_DATA_URL;
-    private static String FIND_ORIGINAL_USER_BY_USERNAME_URL;
+    private static String FIND_USER_BY_USERNAME_URL;
     private static String OAUTH_REDIRECT_VK_URL;
     private static String OAUTH_REDIRECT_GOOGLE_URL;
     private static String OAUTH_REDIRECT_STEAM_URL;
@@ -112,9 +111,9 @@ public class OAuthServiceImpl implements OAuthService {
         SAVE_USER_DATA_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/userData/save";
-        FIND_ORIGINAL_USER_BY_USERNAME_URL = "http://"
+        FIND_USER_BY_USERNAME_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findOriginalUserByUsername";
+                + ":8081/api/user/findUserByUsername";
     }
 
     @Override
@@ -127,7 +126,7 @@ public class OAuthServiceImpl implements OAuthService {
                     return existsByUsername(username)
                             .flatMap(userExists -> {
                                 if (userExists) {
-                                    return findOriginalUserByUsername(username)
+                                    return findUserByUsername(username)
                                             .flatMap(user -> {
                                                 long userId = user.getId();
 
@@ -242,7 +241,7 @@ public class OAuthServiceImpl implements OAuthService {
                     return existsByUsername(username)
                             .flatMap(exists -> {
                                 if (exists){
-                                    return findOriginalUserByUsername(username)
+                                    return findUserByUsername(username)
                                             .flatMap(user -> {
                                                 long userId = user.getId();
 
@@ -325,7 +324,7 @@ public class OAuthServiceImpl implements OAuthService {
                             String username = steamUserDto.getResponse().getPlayers()[0].getSteamId() + "_steam";
 
                             if (exists){
-                                return findOriginalUserByUsername(username)
+                                return findUserByUsername(username)
                                         .flatMap(user -> {
                                             long userId = user.getId();
 
@@ -521,9 +520,9 @@ public class OAuthServiceImpl implements OAuthService {
     }
 
 
-    private Mono<User> findOriginalUserByUsername(String username){
+    private Mono<User> findUserByUsername(String username){
         return WebClient.builder()
-                .baseUrl(FIND_ORIGINAL_USER_BY_USERNAME_URL + "?username=" + username)
+                .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + username)
                 .build()
                 .get()
                 .retrieve()

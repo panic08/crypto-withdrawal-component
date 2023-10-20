@@ -28,7 +28,6 @@ import java.nio.file.Paths;
 public class PersonalServiceImpl implements PersonalService {
 
     private final WebClient.Builder webClient;
-    private final JwtUtil jwtUtil;
     private final ServicesIpProperty servicesIpProperty;
     private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
             "/srv/photos/" : "D:/photos/";
@@ -37,7 +36,7 @@ public class PersonalServiceImpl implements PersonalService {
     private static String UPDATE_PROFILE_TYPE_BY_USERID;
     private static String UPDATE_USER_ACCOUNT_NON_LOCKED_BY_ID;
     private static String UPDATE_USERDATA_BALANCE_BY_USERID;
-    private static String FIND_ORIGINAL_USER_BY_ID_URL;
+    private static String FIND_USER_BY_ID_URL;
 
     @PostConstruct
     public void init() {
@@ -56,9 +55,9 @@ public class PersonalServiceImpl implements PersonalService {
         UPDATE_USER_ACCOUNT_NON_LOCKED_BY_ID = "http://"
                 + servicesIpProperty.getUserApiIp()
                 + ":8081/api/user/updateAccountNonLockedById";
-        FIND_ORIGINAL_USER_BY_ID_URL = "http://"
+        FIND_USER_BY_ID_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findOriginalUserById";
+                + ":8081/api/user/findUserById";
     }
 
     @Override
@@ -113,7 +112,7 @@ public class PersonalServiceImpl implements PersonalService {
 
     @Override
     public Mono<ChangeBalancePayload> changeBalance(long id, ChangeBalancePayload changeBalancePayload) {
-        return findOriginalUserById(id)
+        return findUserById(id)
                 .flatMap(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)) {
                         return updateUserDataBalanceByUserId(changeBalancePayload.getBalance(), changeBalancePayload.getUserId())
@@ -126,7 +125,7 @@ public class PersonalServiceImpl implements PersonalService {
 
     @Override
     public Mono<ChangeIsAccountNonLockedPayload> changeIsAccountNonLocked(long id, ChangeIsAccountNonLockedPayload changeIsAccountNonLockedPayload) {
-        return findOriginalUserById(id)
+        return findUserById(id)
                 .flatMap(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
                         return updateUserAccountNonLockedById(changeIsAccountNonLockedPayload.isAccountNonLocked(), changeIsAccountNonLockedPayload.getUserId())
@@ -187,9 +186,9 @@ public class PersonalServiceImpl implements PersonalService {
                 .cache();
     }
 
-    private Mono<User> findOriginalUserById(long id){
+    private Mono<User> findUserById(long id){
         return webClient
-                .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
+                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()
                 .retrieve()

@@ -1,19 +1,19 @@
 package com.casino.replenishments.service.implement;
 
 import com.casino.replenishments.dto.CryptoReplenishmentMessage;
+import com.casino.replenishments.dto.CryptoReplenishmentSessionDto;
 import com.casino.replenishments.enums.CryptoDataCurrency;
 import com.casino.replenishments.enums.CryptoReplenishmentSessionCurrency;
 import com.casino.replenishments.exception.CryptoReplenishmentExistsException;
-import com.casino.replenishments.exception.IncorrectTokenProvidedException;
 import com.casino.replenishments.mapper.CryptoReplenishmentMessageToCryptoReplenishmentResponseMapperImpl;
 import com.casino.replenishments.mapper.CryptoReplenishmentRequestToCryptoReplenishmentMessageMapperImpl;
+import com.casino.replenishments.mapper.CryptoReplenishmentSessionToCryptoReplenishmentSessionDtoMapperImpl;
 import com.casino.replenishments.model.CryptoData;
 import com.casino.replenishments.model.CryptoReplenishmentSession;
 import com.casino.replenishments.model.User;
 import com.casino.replenishments.payload.children.*;
 import com.casino.replenishments.payload.CryptoReplenishmentResponse;
 import com.casino.replenishments.property.ServicesIpProperty;
-import com.casino.replenishments.security.JwtUtil;
 import com.casino.replenishments.service.CryptoReplenishmentService;
 import com.casino.replenishments.util.NumberFormatterUtil;
 import com.casino.replenishments.util.RandomNumberGeneratorUtil;
@@ -34,10 +34,11 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
     private final KafkaTemplate<String, CryptoReplenishmentMessage> kafkaTemplate;
     private final CryptoReplenishmentRequestToCryptoReplenishmentMessageMapperImpl cryptoReplenishmentRequestToCryptoReplenishmentMessageMapper;
     private final CryptoReplenishmentMessageToCryptoReplenishmentResponseMapperImpl cryptoReplenishmentMessageToCryptoReplenishmentResponseMapper;
+    private final CryptoReplenishmentSessionToCryptoReplenishmentSessionDtoMapperImpl cryptoReplenishmentSessionToCryptoReplenishmentSessionDtoMapper;
     private static String FIND_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL;
     private static String DELETE_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL;
     private static final String CRYPTO_REPLENISHMENT_TOPIC = "crypto-replenishment-topic";
-    private static String FIND_ORIGINAL_USER_BY_ID_URL;
+    private static String FIND_USER_BY_ID_URL;
     private static String EXISTS_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL;
     private static String FIND_ALL_CRYPTO_DATA_BY_CURRENCY_URL;
     private static String SAVE_CRYPTO_REPLENISHMENT_SESSION_URL;
@@ -49,9 +50,9 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
         DELETE_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL = "http://"
                 + servicesIpProperty.getReplenishmentApiIp()
                 + ":8083/api/cryptoReplenishmentSession/deleteByUserIdAndCurrency";
-        FIND_ORIGINAL_USER_BY_ID_URL = "http://"
+        FIND_USER_BY_ID_URL = "http://"
                 + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findOriginalUserById";
+                + ":8081/api/user/findUserById";
         EXISTS_CRYPTO_REPLENISHMENT_SESSION_BY_USERID_AND_CURRENCY_URL = "http://"
                 + servicesIpProperty.getReplenishmentApiIp()
                 + ":8083/api/cryptoReplenishmentSession/existsByUserIdAndCurrency";
@@ -64,8 +65,10 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
     }
 
     @Override
-    public Mono<CryptoReplenishmentSession> getCryptoReplenishmentSession(long userId, CryptoReplenishmentSessionCurrency currency) {
-        return findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency);
+    public Mono<CryptoReplenishmentSessionDto> getCryptoReplenishmentSession(long userId, CryptoReplenishmentSessionCurrency currency) {
+        return findCryptoReplenishmentSessionByUserIdAndCurrency(userId, currency)
+                .flatMap(cryptoReplenishmentSession -> Mono.just(cryptoReplenishmentSessionToCryptoReplenishmentSessionDtoMapper
+                        .cryptoReplenishmentSessionToCryptoReplenishmentSessionDto(cryptoReplenishmentSession)));
     }
 
     @Override
@@ -75,7 +78,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
 
     @Override
     public Mono<CryptoReplenishmentResponse> createTrxCryptoReplenishment(long userId, CryptoReplenishmentTrxRequest cryptoReplenishmentTrxRequest) {
-        Mono<User> userMono = findOriginalUserById(userId);
+        Mono<User> userMono = findUserById(userId);
 
         return userMono
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.TRX))
@@ -117,7 +120,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
 
     @Override
     public Mono<CryptoReplenishmentResponse> createEthCryptoReplenishment(long userId, CryptoReplenishmentEthRequest cryptoReplenishmentEthRequest) {
-        Mono<User> userMono = findOriginalUserById(userId);
+        Mono<User> userMono = findUserById(userId);
 
         return userMono
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.ETH))
@@ -159,7 +162,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
 
     @Override
     public Mono<CryptoReplenishmentResponse> createBtcCryptoReplenishment(long userId, CryptoReplenishmentBtcRequest cryptoReplenishmentBtcRequest) {
-        Mono<User> userMono = findOriginalUserById(userId);
+        Mono<User> userMono = findUserById(userId);
 
         return userMono
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.BTC))
@@ -201,7 +204,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
 
     @Override
     public Mono<CryptoReplenishmentResponse> createUsdtTrc20CryptoReplenishment(long userId, CryptoReplenishmentUsdtRequest cryptoReplenishmentUsdtRequest) {
-        Mono<User> userMono = findOriginalUserById(userId);
+        Mono<User> userMono = findUserById(userId);
 
         return userMono
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.USDT_TRC20))
@@ -243,7 +246,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
 
     @Override
     public Mono<CryptoReplenishmentResponse> createBscCryptoReplenishment(long userId, CryptoReplenishmentBscRequest cryptoReplenishmentBscRequest) {
-        Mono<User> userMono = findOriginalUserById(userId);
+        Mono<User> userMono = findUserById(userId);
 
         return userMono
                 .flatMap(user -> existsCryptoReplenishmentSessionByUserIdAndCurrency(user.getId(), CryptoReplenishmentSessionCurrency.BSC))
@@ -283,9 +286,9 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                         }));
     }
 
-    private Mono<User> findOriginalUserById(long id){
+    private Mono<User> findUserById(long id){
         return webClient
-                .baseUrl(FIND_ORIGINAL_USER_BY_ID_URL + "?id=" + id)
+                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
                 .build()
                 .get()
                 .retrieve()

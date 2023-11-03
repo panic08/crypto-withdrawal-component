@@ -13,24 +13,24 @@ import reactor.core.publisher.Mono;
 
 
 @RestController
-@RequestMapping("/api/oauth")
+@RequestMapping("/api/auth/oauth")
 @RequiredArgsConstructor
 public class OAuthController {
     private final OAuthServiceImpl oAuthService;
 
     @GetMapping("/vk")
     public Mono<ResponseEntity<Void>> redirectVK(){
-        return oAuthService.handleRedirectVK();
+        return oAuthService.redirectVk();
     }
 
     @GetMapping("/google")
     public Mono<ResponseEntity<Void>> redirectGoogle(){
-        return oAuthService.handleRedirectGoogle();
+        return oAuthService.redirectGoogle();
     }
 
     @GetMapping("/steam")
     public Mono<ResponseEntity<Void>> redirectSteam(){
-        return oAuthService.handleRedirectSteam();
+        return oAuthService.redirectSteam();
     }
 
     @PostMapping("/authorizeByVk")

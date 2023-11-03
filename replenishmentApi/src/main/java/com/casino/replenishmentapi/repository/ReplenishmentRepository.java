@@ -14,4 +14,8 @@ public interface ReplenishmentRepository extends ReactiveCrudRepository<Replenis
     Flux<Replenishment> findAllReplenishmentByUserIdByCreatedAtDesc(@Param("user_id") long userId,
                                                        @Param("start_index") int startIndex,
                                                        @Param("end_index") int endIndex);
+    @Query("SELECT r.* FROM replenishments_table r ORDER BY r.created_at" +
+            " DESC LIMIT :end_index OFFSET :start_index")
+    Flux<Replenishment> findAllReplenishmentByCreatedAtDesc(@Param("start_index") int startIndex,
+                                                                    @Param("end_index") int endIndex);
 }

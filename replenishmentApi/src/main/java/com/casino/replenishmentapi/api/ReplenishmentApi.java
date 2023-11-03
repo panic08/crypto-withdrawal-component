@@ -24,13 +24,21 @@ public class ReplenishmentApi {
     private final CryptoReplenishmentSessionRepository cryptoReplenishmentSessionRepository;
     private final CryptoDataRepository cryptoDataRepository;
 
-    @GetMapping("/replenishment/findAllReplenishmentByIdWithLimit")
-    public Flux<Replenishment> findAllReplenishmentWithLimit(
+    @GetMapping("/replenishment/findAllReplenishmentByIdAndDescWithLimit")
+    public Flux<Replenishment> findAllReplenishmentByIdWithLimit(
             @RequestParam("userId") long userId,
             @RequestParam("startIndex") int startIndex,
             @RequestParam("endIndex") int endIndex
     ) {
         return replenishmentRepository.findAllReplenishmentByUserIdByCreatedAtDesc(userId, startIndex, endIndex);
+    }
+
+    @GetMapping("/replenishment/findAllReplenishmentByDescWithLimit")
+    public Flux<Replenishment> findAllReplenishmentWithLimit(
+            @RequestParam("startIndex") int startIndex,
+            @RequestParam("endIndex") int endIndex
+    ) {
+        return replenishmentRepository.findAllReplenishmentByCreatedAtDesc(startIndex, endIndex);
     }
 
     @GetMapping("/cryptoReplenishmentSession/findCryptoReplenishmentSessionByUserIdAndCurrency")

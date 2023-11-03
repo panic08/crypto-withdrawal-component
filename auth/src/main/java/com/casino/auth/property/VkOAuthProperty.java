@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("vk.oauth")
+@ConfigurationProperties("oauth.vk")
 @Getter
 @Setter
 public class VkOAuthProperty {

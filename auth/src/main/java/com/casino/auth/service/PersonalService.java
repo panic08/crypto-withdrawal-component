@@ -5,10 +5,10 @@ import org.springframework.http.codec.multipart.FilePart;
 import reactor.core.publisher.Mono;
 
 public interface PersonalService {
-    Mono<ChangeServerSeedResponse> changeServerSeed(long id);
-    Mono<ChangeClientSeedPayload> changeClientSeed(long id, ChangeClientSeedPayload changeClientSeedPayload);
-    Mono<ChangeProfileTypePayload> changeProfileType(long id, ChangeProfileTypePayload changeProfileTypePayload);
-    Mono<Void> changePhoto(long id, FilePart multipartFile);
-    Mono<ChangeBalancePayload> changeBalance(long id, ChangeBalancePayload changeBalancePayload);
-    Mono<ChangeIsAccountNonLockedPayload> changeIsAccountNonLocked(long id, ChangeIsAccountNonLockedPayload changeIsAccountNonLockedPayload);
+    Mono<ChangeServerSeedResponse> changeServerSeed(long principalId);
+    Mono<ChangeClientSeedPayload> changeClientSeed(long principalId, ChangeClientSeedPayload changeClientSeedPayload);
+    Mono<ChangeProfileTypePayload> changeProfileType(long principalId, ChangeProfileTypePayload changeProfileTypePayload);
+    Mono<Void> changePhoto(long principalId, FilePart multipartFile);
+    Mono<ChangeBalancePayload> changeBalance(long principalId, ChangeBalancePayload changeBalancePayload);
+    Mono<ChangeIsAccountNonLockedPayload> changeIsAccountNonLocked(long principalId, ChangeIsAccountNonLockedPayload changeIsAccountNonLockedPayload);
 }

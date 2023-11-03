@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("google.oauth")
+@ConfigurationProperties("oauth.google")
 @Getter
 @Setter
 public class GoogleOAuthProperty {

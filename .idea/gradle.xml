@@ -44,6 +44,14 @@
           </set>
         </option>
       </GradleProjectSettings>
+      <GradleProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/withdrawals" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/withdrawals" />
+          </set>
+        </option>
+      </GradleProjectSettings>
     </option>
   </component>
 </project>

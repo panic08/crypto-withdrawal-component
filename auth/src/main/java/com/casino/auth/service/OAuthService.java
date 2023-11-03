@@ -11,7 +11,7 @@ public interface OAuthService {
     Mono<AuthorizationResponse> handleAuthorizeByVk(VkAuthorizationRequest vkAuthorizationRequest);
     Mono<AuthorizationResponse> handleAuthorizeByGoogle(GoogleAuthorizationRequest googleAuthorizationRequest);
     Mono<AuthorizationResponse> handleAuthorizeBySteam(SteamAuthorizationRequest steamAuthorizationRequest);
-    Mono<ResponseEntity<Void>> handleRedirectVK();
-    Mono<ResponseEntity<Void>> handleRedirectGoogle();
-    Mono<ResponseEntity<Void>> handleRedirectSteam();
+    Mono<ResponseEntity<Void>> redirectVk();
+    Mono<ResponseEntity<Void>> redirectGoogle();
+    Mono<ResponseEntity<Void>> redirectSteam();
 }

@@ -10,6 +10,7 @@
     <file type="web" url="file://$PROJECT_DIR$/replenishmentCreate" />
     <file type="web" url="file://$PROJECT_DIR$/replenishments" />
     <file type="web" url="file://$PROJECT_DIR$/userApi" />
+    <file type="web" url="file://$PROJECT_DIR$/withdrawals" />
   </component>
   <component name="NullableNotNullManager">
     <option name="myDefaultNullable" value="org.jetbrains.annotations.Nullable" />

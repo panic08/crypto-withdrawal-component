@@ -20,4 +20,19 @@ public class ReplenishmentController {
                                          @RequestParam("endIndex") int endIndex){
         return replenishmentService.getAllReplenishment(Long.parseLong(usernamePasswordAuthenticationToken.getName()), startIndex, endIndex);
     }
+
+    @GetMapping("/getAllByUserId")
+    public Flux<ReplenishmentDto> getAllByUserId(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
+                                                 @RequestParam("userId") long userId,
+                                                 @RequestParam("startIndex") int startIndex,
+                                                 @RequestParam("endIndex") int endIndex){
+        return replenishmentService.getAllReplenishmentByUserId(Long.parseLong(usernamePasswordAuthenticationToken.getName()), userId, startIndex, endIndex);
+    }
+
+    @GetMapping("/getAllForRole")
+    public Flux<ReplenishmentDto> getAllForRole(UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken,
+                                         @RequestParam("startIndex") int startIndex,
+                                         @RequestParam("endIndex") int endIndex){
+        return replenishmentService.getAllReplenishmentForRole(Long.parseLong(usernamePasswordAuthenticationToken.getName()), startIndex, endIndex);
+    }
 }

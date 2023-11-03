@@ -1,10 +1,7 @@
 package com.example.userapi.api;
 
-import com.example.userapi.model.UserCombined;
+import com.example.userapi.model.*;
 import com.example.userapi.enums.UserDataProfileType;
-import com.example.userapi.model.User;
-import com.example.userapi.model.UserActivity;
-import com.example.userapi.model.UserData;
 import com.example.userapi.repository.UserActivityRepository;
 import com.example.userapi.repository.UserDataRepository;
 import com.example.userapi.repository.UserRepository;

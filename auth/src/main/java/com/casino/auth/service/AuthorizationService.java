@@ -8,6 +8,6 @@ import reactor.core.publisher.Mono;
 public interface AuthorizationService {
     Mono<AuthorizationResponse> handleRegister(AuthorizationRequest authorizationRequest);
     Mono<AuthorizationResponse> handleLogin(AuthorizationRequest authorizationRequest);
-    Mono<UserCombinedDto> getUserInfo(long id);
+    Mono<UserCombinedDto> getUserInfo(long principalId);
     Mono<AuthorizationResponse> handleRefreshAccessToken(String authorization);
 }

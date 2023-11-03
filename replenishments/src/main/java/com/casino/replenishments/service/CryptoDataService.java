@@ -7,7 +7,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 public interface CryptoDataService {
-    Mono<CryptoDataCreatePayload> createCryptoData(long userId, CryptoDataCreatePayload cryptoDataCreatePayload);
-    Flux<CryptoDataDto> getAllCryptoData(long userId);
-    Mono<Void> deleteCryptoData(long userId, long id);
+    Mono<CryptoDataCreatePayload> createCryptoData(long principalId, CryptoDataCreatePayload cryptoDataCreatePayload);
+    Flux<CryptoDataDto> getAllCryptoData(long principalId);
+    Mono<Void> deleteCryptoData(long principalId, long id);
 }

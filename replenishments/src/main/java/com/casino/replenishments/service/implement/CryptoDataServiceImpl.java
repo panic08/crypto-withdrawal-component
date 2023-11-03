@@ -1,57 +1,34 @@
 package com.casino.replenishments.service.implement;
 
+import com.casino.replenishments.api.ReplenishmentApi;
+import com.casino.replenishments.api.UserApi;
 import com.casino.replenishments.dto.CryptoDataDto;
 import com.casino.replenishments.enums.UserRole;
 import com.casino.replenishments.exception.UnauthorizedRoleException;
 import com.casino.replenishments.mapper.CryptoDataCreatePayloadToCryptoDataMapperImpl;
-import com.casino.replenishments.mapper.CryptoDataToCryptoDataDtoMapper;
 import com.casino.replenishments.mapper.CryptoDataToCryptoDataDtoMapperImpl;
-import com.casino.replenishments.model.CryptoData;
-import com.casino.replenishments.model.User;
 import com.casino.replenishments.payload.CryptoDataCreatePayload;
-import com.casino.replenishments.property.ServicesIpProperty;
 import com.casino.replenishments.service.CryptoDataService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
 public class CryptoDataServiceImpl implements CryptoDataService {
-    private static String SAVE_CRYPTO_DATA_URL;
-    private final ServicesIpProperty servicesIpProperty;
-    private final WebClient.Builder webClient;
+
     private final CryptoDataCreatePayloadToCryptoDataMapperImpl cryptoDataCreatePayloadToCryptoDataMapper;
     private final CryptoDataToCryptoDataDtoMapperImpl cryptoDataToCryptoDataDtoMapper;
-    private static String FIND_USER_BY_ID_URL;
-    private static String FIND_ALL_CRYPTO_DATA_URL;
-    private static String DELETE_CRYPTO_DATA_BY_ID_URL;
-
-    @PostConstruct
-    public void init() {
-        FIND_USER_BY_ID_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findUserById";
-        SAVE_CRYPTO_DATA_URL = "http://"
-                + servicesIpProperty.getReplenishmentApiIp()
-                + ":8083/api/cryptoData/save";
-        DELETE_CRYPTO_DATA_BY_ID_URL = "http://"
-                + servicesIpProperty.getReplenishmentApiIp()
-                + ":8083/api/cryptoData/deleteById";
-        FIND_ALL_CRYPTO_DATA_URL = "http://"
-                + servicesIpProperty.getReplenishmentApiIp()
-                + ":8083/api/cryptoData/findAllCryptoData";
-    }
+    private final UserApi userApi;
+    private final ReplenishmentApi replenishmentApi;
 
     @Override
-    public Mono<CryptoDataCreatePayload> createCryptoData(long userId, CryptoDataCreatePayload cryptoDataCreatePayload) {
-        return findUserById(userId)
+    public Mono<CryptoDataCreatePayload> createCryptoData(long principalId, CryptoDataCreatePayload cryptoDataCreatePayload) {
+        return userApi.findUserById(principalId)
                 .flatMap(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
-                        return saveCryptoData(cryptoDataCreatePayloadToCryptoDataMapper
+                        return replenishmentApi.saveCryptoData(cryptoDataCreatePayloadToCryptoDataMapper
                                 .cryptoDataCreatePayloadToCryptoData(cryptoDataCreatePayload))
                                 .thenReturn(cryptoDataCreatePayload);
                     } else {
@@ -61,11 +38,11 @@ public class CryptoDataServiceImpl implements CryptoDataService {
     }
 
     @Override
-    public Flux<CryptoDataDto> getAllCryptoData(long userId) {
-        return findUserById(userId)
+    public Flux<CryptoDataDto> getAllCryptoData(long principalId) {
+        return userApi.findUserById(principalId)
                 .flatMapMany(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
-                        return findAllCryptoData().flatMap(cryptoData -> Mono.just(cryptoDataToCryptoDataDtoMapper.cryptoDataToCryptoDataDto(cryptoData)));
+                        return replenishmentApi.findAllCryptoData().flatMap(cryptoData -> Mono.just(cryptoDataToCryptoDataDtoMapper.cryptoDataToCryptoDataDto(cryptoData)));
                     } else {
                         return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
                     }
@@ -73,49 +50,14 @@ public class CryptoDataServiceImpl implements CryptoDataService {
     }
 
     @Override
-    public Mono<Void> deleteCryptoData(long userId, long id) {
-        return findUserById(userId)
+    public Mono<Void> deleteCryptoData(long principalId, long id) {
+        return userApi.findUserById(principalId)
                 .flatMap(user -> {
                     if (user.getRole().equals(UserRole.ADMIN)){
-                        return deleteCryptoDataById(id);
+                        return replenishmentApi.deleteCryptoDataById(id);
                     } else {
                         return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
                     }
                 });
-    }
-
-    private Mono<User> findUserById(long id){
-        return webClient
-                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(User.class);
-    }
-    private Mono<CryptoData> saveCryptoData(CryptoData cryptoData){
-        return webClient
-                .baseUrl(SAVE_CRYPTO_DATA_URL)
-                .build()
-                .post()
-                .bodyValue(cryptoData)
-                .retrieve()
-                .bodyToMono(CryptoData.class)
-                .cache();
-    }
-    private Mono<Void> deleteCryptoDataById(long id){
-        return webClient
-                .baseUrl(DELETE_CRYPTO_DATA_BY_ID_URL + "?id=" + id)
-                .build()
-                .delete()
-                .retrieve()
-                .bodyToMono(Void.class);
-    }
-
-    private Flux<CryptoData> findAllCryptoData(){
-        return webClient.baseUrl(FIND_ALL_CRYPTO_DATA_URL)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToFlux(CryptoData.class);
     }
 }

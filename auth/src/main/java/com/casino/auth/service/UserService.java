@@ -6,6 +6,6 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 
 public interface UserService {
-    Mono<ResponseEntity<Resource>> getUserPhotoById(long id);
-    Mono<PublicUserCombinedDto> getUserById(long id);
+    Mono<ResponseEntity<Resource>> getUserPhotoById(long userId);
+    Mono<PublicUserCombinedDto> getUserById(long userId);
 }

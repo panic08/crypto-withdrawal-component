@@ -1,5 +1,6 @@
 package com.casino.auth.service.implement;
 
+import com.casino.auth.api.UserApi;
 import com.casino.auth.dto.UserCombinedDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.enums.UserDataRank;
@@ -12,19 +13,15 @@ import com.casino.auth.mapper.AuthorizationRequestToUserMapperImpl;
 import com.casino.auth.mapper.UserCombinedToUserCombinedDtoMapperImpl;
 import com.casino.auth.model.User;
 import com.casino.auth.model.UserActivity;
-import com.casino.auth.model.UserCombined;
 import com.casino.auth.model.UserData;
 import com.casino.auth.payload.AuthorizationRequest;
 import com.casino.auth.payload.AuthorizationResponse;
-import com.casino.auth.property.ServicesIpProperty;
 import com.casino.auth.security.jwt.JwtUtil;
 import com.casino.auth.service.AuthorizationService;
 import com.casino.auth.util.HexGeneratorUtil;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 @Service
@@ -32,44 +29,11 @@ import reactor.core.publisher.Mono;
 public class AuthorizationServiceImpl implements AuthorizationService {
 
     private final JwtUtil jwtUtil;
-    private final WebClient.Builder webClient;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final AuthorizationRequestToUserMapperImpl authorizationRequestToUserMapper;
     private final AuthorizationRequestToUserActivityMapperImpl authorizationRequestToUserActivityMapper;
     private final UserCombinedToUserCombinedDtoMapperImpl userCombinedToUserCombinedDtoMapper;
-    private final ServicesIpProperty servicesIpProperty;
-    private static String EXISTS_USER_BY_USERNAME_URL;
-    private static String SAVE_USER_URL;
-    private static String SAVE_USER_ACTIVITY_URL;
-    private static String SAVE_USER_DATA_URL;
-    private static String FIND_USER_BY_USERNAME_URL;
-    private static String FIND_USER_BY_ID_URL;
-    private static String FIND_USERCOMBINED_BY_ID_URL;
-
-    @PostConstruct
-    public void init() {
-        EXISTS_USER_BY_USERNAME_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/existsByUsername";
-        SAVE_USER_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/save";
-        SAVE_USER_ACTIVITY_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/userActivity/save";
-        SAVE_USER_DATA_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/userData/save";
-        FIND_USER_BY_USERNAME_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findUserByUsername";
-        FIND_USERCOMBINED_BY_ID_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/userCombined/findUserCombinedById";
-        FIND_USER_BY_ID_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findUserById";
-    }
+    private final UserApi userApi;
 
     @Override
     public Mono<AuthorizationResponse> handleRegister(AuthorizationRequest authorizationRequest) {
@@ -81,13 +45,13 @@ public class AuthorizationServiceImpl implements AuthorizationService {
             user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
 
             return user;
-        }).flatMap(user -> existsByUsername(user.getUsername())
+        }).flatMap(user -> userApi.existsByUsername(user.getUsername())
                 .flatMap(exists-> {
                     if (exists){
                         return Mono.error(new UserAlreadyExistsException("This user already exists"));
                     }
 
-                    return saveUser(user)
+                    return userApi.saveUser(user)
                             .flatMap(savedUser -> {
                                 long userId = savedUser.getId();
                                 String username = savedUser.getUsername();
@@ -111,8 +75,8 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
 
                                 return Mono.zip(
-                                        saveUserActivity(userActivity),
-                                        saveUserData(userData)
+                                        userApi.saveUserActivity(userActivity),
+                                        userApi.saveUserData(userData)
                                 ).thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
                                         jwtUtil.generateRefreshToken(savedUser)));
                             });
@@ -121,7 +85,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
     @Override
     public Mono<AuthorizationResponse> handleLogin(AuthorizationRequest authorizationRequest) {
-        Mono<User> userMono = findUserByUsername(authorizationRequest.getUsername());
+        Mono<User> userMono = userApi.findUserByUsername(authorizationRequest.getUsername());
 
         return userMono.flatMap(user -> {
             if (!bCryptPasswordEncoder.matches(authorizationRequest.getPassword(), user.getPassword())){
@@ -133,7 +97,7 @@ public class AuthorizationServiceImpl implements AuthorizationService {
 
             userActivity.setUserId(user.getId());
 
-            Mono<UserActivity> userActivityMono = saveUserActivity(userActivity);
+            Mono<UserActivity> userActivityMono = userApi.saveUserActivity(userActivity);
 
             return Mono.zip(userMono, userActivityMono);
         }).map(objects -> {
@@ -145,84 +109,16 @@ public class AuthorizationServiceImpl implements AuthorizationService {
     }
 
     @Override
-    public Mono<UserCombinedDto> getUserInfo(long id) {
-        return findUserCombinedById(id).flatMap(userCombined -> Mono.just(userCombinedToUserCombinedDtoMapper.userCombinedToUserCombinedDto(userCombined)));
+    public Mono<UserCombinedDto> getUserInfo(long principalId) {
+        return userApi.findUserCombinedById(principalId).flatMap(userCombined -> Mono.just(userCombinedToUserCombinedDtoMapper.userCombinedToUserCombinedDto(userCombined)));
     }
 
     @Override
     public Mono<AuthorizationResponse> handleRefreshAccessToken(String authorization) {
         return Mono.fromCallable(() -> jwtUtil.extractIdFromRefreshToken(authorization.split(" ")[1]))
                 .onErrorResume(ex -> Mono.error(new IncorrectTokenProvidedException("Incorrect refresh token")))
-                .flatMap(this::findUserById)
+                .flatMap(userApi::findUserById)
                 .map(user -> new AuthorizationResponse(jwtUtil.generateAccessToken(user), null));
     }
 
-    private Mono<User> findUserByUsername(String username){
-        return webClient
-                .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + username)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(User.class);
-    }
-
-    private Mono<Boolean> existsByUsername(String username){
-        return webClient
-                .baseUrl(EXISTS_USER_BY_USERNAME_URL + "?username=" + username)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
-
-    private Mono<User> saveUser(User user){
-        return webClient
-                .baseUrl(SAVE_USER_URL)
-                .build()
-                .post()
-                .bodyValue(user)
-                .retrieve()
-                .bodyToMono(User.class)
-                .cache();
-    }
-
-    private Mono<UserCombined> findUserCombinedById(long id){
-        return webClient
-                .baseUrl(FIND_USERCOMBINED_BY_ID_URL + "?id=" + id)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(UserCombined.class);
-    }
-
-    private Mono<UserData> saveUserData(UserData userData){
-        return webClient
-                .baseUrl(SAVE_USER_DATA_URL)
-                .build()
-                .post()
-                .bodyValue(userData)
-                .retrieve()
-                .bodyToMono(UserData.class)
-                .cache();
-    }
-
-    private Mono<User> findUserById(long id){
-        return webClient
-                .baseUrl(FIND_USER_BY_ID_URL + "?id=" + id)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(User.class);
-    }
-
-    private Mono<UserActivity> saveUserActivity(UserActivity userActivity){
-        return webClient
-                .baseUrl(SAVE_USER_ACTIVITY_URL)
-                .build()
-                .post()
-                .bodyValue(userActivity)
-                .retrieve()
-                .bodyToMono(UserActivity.class)
-                .cache();
-    }
 }

@@ -6,7 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Component
-@ConfigurationProperties("steam.oauth")
+@ConfigurationProperties("oauth.steam")
 @Getter
 @Setter
 public class SteamOAuthProperty {

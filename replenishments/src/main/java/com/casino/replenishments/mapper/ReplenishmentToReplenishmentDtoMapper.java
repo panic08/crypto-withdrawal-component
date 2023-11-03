@@ -11,6 +11,7 @@ public interface ReplenishmentToReplenishmentDtoMapper {
     @Mappings({
             @Mapping(source = "id", target = "id"),
             @Mapping(source = "method", target = "method"),
+            @Mapping(ignore = true, target = "user"),
             @Mapping(source = "currency", target = "currency"),
             @Mapping(source = "amount", target = "amount"),
             @Mapping(source = "createdAt", target = "createdAt")

@@ -1,5 +1,6 @@
 package com.casino.auth.service.implement;
 
+import com.casino.auth.api.UserApi;
 import com.casino.auth.dto.google.GoogleAccessTokenDto;
 import com.casino.auth.dto.google.GoogleAccessTokenRequest;
 import com.casino.auth.dto.google.GoogleCertsDto;
@@ -18,7 +19,6 @@ import com.casino.auth.payload.google.GoogleAuthorizationRequest;
 import com.casino.auth.payload.steam.SteamAuthorizationRequest;
 import com.casino.auth.payload.vk.VkAuthorizationRequest;
 import com.casino.auth.property.GoogleOAuthProperty;
-import com.casino.auth.property.ServicesIpProperty;
 import com.casino.auth.property.SteamOAuthProperty;
 import com.casino.auth.property.VkOAuthProperty;
 import com.casino.auth.security.jwt.JwtUtil;
@@ -58,7 +58,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class OAuthServiceImpl implements OAuthService {
     private final VkOAuthProperty vkOAuthProperty;
-    private final ServicesIpProperty servicesIpProperty;
     private final GoogleOAuthProperty googleOAuthProperty;
     private final SteamOAuthProperty steamOAuthProperty;
     private final JwtUtil jwtUtil;
@@ -77,14 +76,10 @@ public class OAuthServiceImpl implements OAuthService {
     private static final String  GET_GOOGLE_ACCESS_TOKEN_URL = "https://www.googleapis.com/oauth2/v4/token";
     private static final String GET_VK_ACCESS_CODE_URL = "https://oauth.vk.com/access_token";
     private static final String GET_GOOGLE_CERTS_URL = "https://www.googleapis.com/oauth2/v3/certs";
-    private static String SAVE_USER_URL;
-    private static String EXISTS_BY_USERNAME_URL;
-    private static String SAVE_USER_ACTIVITY_URL;
-    private static String SAVE_USER_DATA_URL;
-    private static String FIND_USER_BY_USERNAME_URL;
     private static String OAUTH_REDIRECT_VK_URL;
     private static String OAUTH_REDIRECT_GOOGLE_URL;
     private static String OAUTH_REDIRECT_STEAM_URL;
+    private final UserApi userApi;
 
     @PostConstruct
     public void init() {
@@ -99,21 +94,6 @@ public class OAuthServiceImpl implements OAuthService {
         OAUTH_REDIRECT_STEAM_URL = "https://steamcommunity.com/openid/login?openid.ns=http://specs.openid.net/auth/2.0&openid.claimed_id=http://specs.openid.net/auth/2.0/identifier_select&openid.identity=http://specs.openid.net/auth/2.0/identifier_select&openid.return_to="
                 + steamOAuthProperty.getRedirectUrl() + "&openid.realm="
                 + steamOAuthProperty.getRedirectUrl() + "&openid.mode=checkid_setup";
-        EXISTS_BY_USERNAME_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/existsByUsername";
-        SAVE_USER_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/save";
-        SAVE_USER_ACTIVITY_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/userActivity/save";
-        SAVE_USER_DATA_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/userData/save";
-        FIND_USER_BY_USERNAME_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/user/findUserByUsername";
     }
 
     @Override
@@ -123,10 +103,10 @@ public class OAuthServiceImpl implements OAuthService {
                 .flatMap(vkUserDto -> {
                     String username = vkUserDto.getResponse()[0].getId() + "_vk";
 
-                    return existsByUsername(username)
+                    return userApi.existsByUsername(username)
                             .flatMap(userExists -> {
                                 if (userExists) {
-                                    return findUserByUsername(username)
+                                    return userApi.findUserByUsername(username)
                                             .flatMap(user -> {
                                                 long userId = user.getId();
 
@@ -136,7 +116,7 @@ public class OAuthServiceImpl implements OAuthService {
 
                                                 userActivity.setUserId(userId);
 
-                                                return saveUserActivity(userActivity)
+                                                return userApi.saveUserActivity(userActivity)
                                                         .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
                                                                 jwtUtil.generateRefreshToken(user)));
                                             });
@@ -147,7 +127,7 @@ public class OAuthServiceImpl implements OAuthService {
                                     user.setUsername(username);
                                     user.setPassword(bCryptPasswordEncoder.encode(HexGeneratorUtil.generateHex()));
 
-                                    return saveUser(user)
+                                    return userApi.saveUser(user)
                                             .flatMap(savedUser -> {
                                                 long userId = savedUser.getId();
 
@@ -173,8 +153,8 @@ public class OAuthServiceImpl implements OAuthService {
                                                 );
 
                                                 return Mono.when(
-                                                                saveUserActivity(userActivity),
-                                                                saveUserData(userData),
+                                                                userApi.saveUserActivity(userActivity),
+                                                                userApi.saveUserData(userData),
                                                                 downloadPhotoByLinkAndUserId(vkUserDto.getResponse()[0].getPhotoMax(), userId)
                                                         )
                                                         .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
@@ -238,10 +218,10 @@ public class OAuthServiceImpl implements OAuthService {
                 .flatMap(claims -> {
                     String username = claims.get("sub", String.class) + "_google";
 
-                    return existsByUsername(username)
+                    return userApi.existsByUsername(username)
                             .flatMap(exists -> {
                                 if (exists){
-                                    return findUserByUsername(username)
+                                    return userApi.findUserByUsername(username)
                                             .flatMap(user -> {
                                                 long userId = user.getId();
 
@@ -251,7 +231,7 @@ public class OAuthServiceImpl implements OAuthService {
 
                                                 userActivity.setUserId(userId);
 
-                                                return saveUserActivity(userActivity)
+                                                return userApi.saveUserActivity(userActivity)
                                                         .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
                                                                 jwtUtil.generateRefreshToken(user)));
                                     });
@@ -278,7 +258,7 @@ public class OAuthServiceImpl implements OAuthService {
                                     user.setUsername(username);
                                     user.setPassword(bCryptPasswordEncoder.encode(HexGeneratorUtil.generateHex()));
 
-                                    return saveUser(user)
+                                    return userApi.saveUser(user)
                                             .flatMap(savedUser -> {
                                                 long userId = savedUser.getId();
 
@@ -299,7 +279,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                         HexGeneratorUtil.generateHex()
                                                 );
 
-                                                return Mono.when(saveUserActivity(userActivity), saveUserData(userData),
+                                                return Mono.when(userApi.saveUserActivity(userActivity), userApi.saveUserData(userData),
                                                                 downloadPhotoByLinkAndUserId(claims.get("picture", String.class), userId))
                                                         .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
                                                                 jwtUtil.generateRefreshToken(savedUser)));
@@ -319,12 +299,12 @@ public class OAuthServiceImpl implements OAuthService {
 
                         return getSteamUserBySteamid(steamAuthorizationRequest.getOpenidIdentity().split("https%3A%2F%2Fsteamcommunity.com%2Fopenid%2Fid%2F")[1]);
                     })
-                .flatMap(steamUserDto -> existsByUsername(steamUserDto.getResponse().getPlayers()[0].getSteamId() + "_steam")
+                .flatMap(steamUserDto -> userApi.existsByUsername(steamUserDto.getResponse().getPlayers()[0].getSteamId() + "_steam")
                         .flatMap(exists -> {
                             String username = steamUserDto.getResponse().getPlayers()[0].getSteamId() + "_steam";
 
                             if (exists){
-                                return findUserByUsername(username)
+                                return userApi.findUserByUsername(username)
                                         .flatMap(user -> {
                                             long userId = user.getId();
 
@@ -334,7 +314,7 @@ public class OAuthServiceImpl implements OAuthService {
 
                                             userActivity.setUserId(userId);
 
-                                            return saveUserActivity(userActivity)
+                                            return userApi.saveUserActivity(userActivity)
                                                     .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(user),
                                                             jwtUtil.generateRefreshToken(user)));
                                         });
@@ -346,7 +326,7 @@ public class OAuthServiceImpl implements OAuthService {
                                 user.setUsername(username);
                                 user.setPassword(bCryptPasswordEncoder.encode(HexGeneratorUtil.generateHex()));
 
-                                return saveUser(user)
+                                return userApi.saveUser(user)
                                         .flatMap(savedUser -> {
                                             long userId = savedUser.getId();
 
@@ -367,7 +347,7 @@ public class OAuthServiceImpl implements OAuthService {
                                                     HexGeneratorUtil.generateHex()
                                             );
 
-                                            return Mono.when(saveUserActivity(userActivity), saveUserData(userData),
+                                            return Mono.when(userApi.saveUserActivity(userActivity), userApi.saveUserData(userData),
                                                             downloadPhotoByLinkAndUserId(steamUserDto.getResponse().getPlayers()[0].getAvatarFull(), userId))
                                                     .thenReturn(new AuthorizationResponse(jwtUtil.generateAccessToken(savedUser),
                                                             jwtUtil.generateRefreshToken(savedUser)));
@@ -380,7 +360,7 @@ public class OAuthServiceImpl implements OAuthService {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> handleRedirectVK() {
+    public Mono<ResponseEntity<Void>> redirectVk() {
         return Mono.fromSupplier(() -> {
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(OAUTH_REDIRECT_VK_URL));
@@ -390,7 +370,7 @@ public class OAuthServiceImpl implements OAuthService {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> handleRedirectGoogle() {
+    public Mono<ResponseEntity<Void>> redirectGoogle() {
         return Mono.fromSupplier(() -> {
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(OAUTH_REDIRECT_GOOGLE_URL));
@@ -400,7 +380,7 @@ public class OAuthServiceImpl implements OAuthService {
     }
 
     @Override
-    public Mono<ResponseEntity<Void>> handleRedirectSteam() {
+    public Mono<ResponseEntity<Void>> redirectSteam() {
         return Mono.fromSupplier(() -> {
             HttpHeaders headers = new HttpHeaders();
             headers.setLocation(URI.create(OAUTH_REDIRECT_STEAM_URL));
@@ -519,55 +499,5 @@ public class OAuthServiceImpl implements OAuthService {
                 .bodyToMono(GoogleCertsDto.class);
     }
 
-
-    private Mono<User> findUserByUsername(String username){
-        return WebClient.builder()
-                .baseUrl(FIND_USER_BY_USERNAME_URL + "?username=" + username)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(User.class);
-    }
-    private Mono<User> saveUser(User user){
-        return WebClient.builder()
-                .baseUrl(SAVE_USER_URL)
-                .build()
-                .post()
-                .bodyValue(user)
-                .retrieve()
-                .bodyToMono(User.class)
-                .cache();
-    }
-
-    private Mono<UserData> saveUserData(UserData userData){
-        return WebClient.builder()
-                .baseUrl(SAVE_USER_DATA_URL)
-                .build()
-                .post()
-                .bodyValue(userData)
-                .retrieve()
-                .bodyToMono(UserData.class)
-                .cache();
-    }
-
-    private Mono<UserActivity> saveUserActivity(UserActivity userActivity){
-        return WebClient.builder()
-                .baseUrl(SAVE_USER_ACTIVITY_URL)
-                .build()
-                .post()
-                .bodyValue(userActivity)
-                .retrieve()
-                .bodyToMono(UserActivity.class)
-                .cache();
-    }
-
-    private Mono<Boolean> existsByUsername(String username){
-        return WebClient.builder()
-                .baseUrl(EXISTS_BY_USERNAME_URL + "?username=" + username)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(Boolean.class);
-    }
 
 }

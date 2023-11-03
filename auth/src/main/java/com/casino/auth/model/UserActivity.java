@@ -7,7 +7,6 @@ import lombok.*;
 @NoArgsConstructor
 public class UserActivity {
     private Long id;
-//    @JsonIgnore
     private Long userId;
     private String ipAddress;
     private String browserName;

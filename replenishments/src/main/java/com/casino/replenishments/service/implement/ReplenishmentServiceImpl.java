@@ -1,14 +1,16 @@
 package com.casino.replenishments.service.implement;
 
+import com.casino.replenishments.api.ReplenishmentApi;
+import com.casino.replenishments.api.UserApi;
 import com.casino.replenishments.dto.ReplenishmentDto;
+import com.casino.replenishments.dto.UserCombinedDto;
+import com.casino.replenishments.enums.UserRole;
+import com.casino.replenishments.exception.UnauthorizedRoleException;
 import com.casino.replenishments.mapper.ReplenishmentToReplenishmentDtoMapperImpl;
-import com.casino.replenishments.model.Replenishment;
-import com.casino.replenishments.property.ServicesIpProperty;
+import com.casino.replenishments.mapper.UserCombinedToUserCombinedDtoMapperImpl;
 import com.casino.replenishments.service.ReplenishmentService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -16,31 +18,61 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class ReplenishmentServiceImpl implements ReplenishmentService {
 
-    private final WebClient.Builder webClient;
-    private final ServicesIpProperty servicesIpProperty;
     private final ReplenishmentToReplenishmentDtoMapperImpl replenishmentToReplenishmentDtoMapper;
-    private static String FIND_ALL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL;
+    private final UserCombinedToUserCombinedDtoMapperImpl userCombinedToUserCombinedDtoMapper;
+    private final UserApi userApi;
+    private final ReplenishmentApi replenishmentApi;
 
-    @PostConstruct
-    public void init() {
-        FIND_ALL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL = "http://"
-                + servicesIpProperty.getReplenishmentApiIp()
-                + ":8083/api/replenishment/findAllReplenishmentByIdWithLimit";
+    @Override
+    public Flux<ReplenishmentDto> getAllReplenishment(long principalId, int startIndex, int endIndex) {
+        int finalEndIndex = endIndex + 1;
+
+        return replenishmentApi.findAllReplenishmentByIdAndDescWithLimit(principalId, startIndex, finalEndIndex)
+                .flatMap(replenishment -> Mono.just(replenishmentToReplenishmentDtoMapper.replenishmentToReplenishmentDto(replenishment)));
     }
 
     @Override
-    public Flux<ReplenishmentDto> getAllReplenishment(long userId, int startIndex, int endIndex) {
-        int finalEndIndex = endIndex + 1;
+    public Flux<ReplenishmentDto> getAllReplenishmentForRole(long principalId, int startIndex, int endIndex) {
+        return userApi.findUserById(principalId)
+                .flatMapMany(user -> {
+                    if (user.getRole().equals(UserRole.ADMIN)){
+                        int finalEndIndex = endIndex + 1;
 
-        return findAllReplenishmentByIdWithLimit(userId, startIndex, finalEndIndex)
-                .flatMap(replenishment -> Mono.just(replenishmentToReplenishmentDtoMapper.replenishmentToReplenishmentDto(replenishment)));
+                        return replenishmentApi.findAllReplenishmentByDescWithLimit(startIndex, finalEndIndex)
+                                .flatMap(replenishment -> {
+                                    ReplenishmentDto replenishmentDto =
+                                            replenishmentToReplenishmentDtoMapper.replenishmentToReplenishmentDto(replenishment);
+
+                                    return userApi.findUserCombinedById(replenishment.getUserId())
+                                            .map(userCombined -> {
+                                                UserCombinedDto userCombinedDto =
+                                                        userCombinedToUserCombinedDtoMapper
+                                                                .userCombinedToUserCombinedDto(userCombined);
+
+                                                replenishmentDto.setUser(userCombinedDto);
+
+                                                return replenishmentDto;
+                                            });
+                                });
+                    } else {
+                        return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
+                    }
+                });
     }
-    private Flux<Replenishment> findAllReplenishmentByIdWithLimit(long userId, int startIndex, int endIndex){
-        return webClient.baseUrl(FIND_ALL_REPLENISHMENT_BY_ID_WITH_LIMIT_URL + "?userId=" + userId
-        + "&startIndex=" + startIndex + "&endIndex=" + endIndex)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToFlux(Replenishment.class);
+
+    @Override
+    public Flux<ReplenishmentDto> getAllReplenishmentByUserId(long principalId, long userId, int startIndex, int endIndex) {
+        return userApi.findUserById(principalId)
+                .flatMapMany(user -> {
+                    if (user.getRole().equals(UserRole.ADMIN)){
+                        int finalEndIndex = endIndex + 1;
+
+                        return replenishmentApi.findAllReplenishmentByIdAndDescWithLimit(userId, startIndex, finalEndIndex)
+                                .map(replenishmentToReplenishmentDtoMapper::replenishmentToReplenishmentDto);
+                    } else {
+                        return Mono.error(new UnauthorizedRoleException("You do not have enough rights"));
+                    }
+                });
     }
+
 }

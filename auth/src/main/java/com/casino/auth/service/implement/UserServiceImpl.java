@@ -1,12 +1,10 @@
 package com.casino.auth.service.implement;
 
+import com.casino.auth.api.UserApi;
 import com.casino.auth.dto.PublicUserCombinedDto;
 import com.casino.auth.enums.UserDataProfileType;
 import com.casino.auth.mapper.UserCombinedToPublicUserCombinedDtoMapperImpl;
-import com.casino.auth.model.UserCombined;
-import com.casino.auth.property.ServicesIpProperty;
 import com.casino.auth.service.UserService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -14,7 +12,6 @@ import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.File;
@@ -24,19 +21,10 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final WebClient.Builder webClient;
-    private final ServicesIpProperty servicesIpProperty;
     private final UserCombinedToPublicUserCombinedDtoMapperImpl userCombinedToPublicUserCombinedDtoMapper;
     private static final String UPLOAD_DIR = System.getProperty("os.name").toLowerCase().contains("linux") ?
             "/srv/photos/" : "D:/photos/";
-    private static String FIND_USERCOMBINED_BY_ID_URL;
-
-    @PostConstruct
-    public void init() {
-        FIND_USERCOMBINED_BY_ID_URL = "http://"
-                + servicesIpProperty.getUserApiIp()
-                + ":8081/api/userCombined/findUserCombinedById";
-    }
+    private final UserApi userApi;
 
     @Override
     public Mono<ResponseEntity<Resource>> getUserPhotoById(long id) {
@@ -72,7 +60,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Mono<PublicUserCombinedDto> getUserById(long id) {
-        return findUserCombinedById(id).map(userCombined -> {
+        return userApi.findUserCombinedById(id).map(userCombined -> {
             PublicUserCombinedDto publicUserCombinedDto = userCombinedToPublicUserCombinedDtoMapper.userCombinedToPublicUserCombinedDto(userCombined);
 
             if(publicUserCombinedDto.getUserData().getProfileType().equals(UserDataProfileType.PRIVATE)){
@@ -84,14 +72,5 @@ public class UserServiceImpl implements UserService {
         });
     }
 
-
-    private Mono<UserCombined> findUserCombinedById(long id){
-        return webClient
-                .baseUrl(FIND_USERCOMBINED_BY_ID_URL + "?id=" + id)
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(UserCombined.class);
-    }
 
 }

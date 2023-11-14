@@ -1,13 +1,8 @@
 package com.casino.cryptoreplenishmentprocess.service.implement;
 
-import com.casino.cryptoreplenishmentprocess.api.ReplenishmentApi;
-import com.casino.cryptoreplenishmentprocess.api.UserApi;
+import com.casino.cryptoreplenishmentprocess.api.*;
 import com.casino.cryptoreplenishmentprocess.dto.CoinsDataDto;
 import com.casino.cryptoreplenishmentprocess.dto.CryptoReplenishmentMessage;
-import com.casino.cryptoreplenishmentprocess.dto.binancecoin.BscTransactionsDto;
-import com.casino.cryptoreplenishmentprocess.dto.bitcoin.BtcTransactionsDto;
-import com.casino.cryptoreplenishmentprocess.dto.ethereum.EthTransactionsDto;
-import com.casino.cryptoreplenishmentprocess.dto.tron.TrxTransactionsDto;
 import com.casino.cryptoreplenishmentprocess.mapper.CryptoReplenishmentMessageToReplenishmentMapperImpl;
 import com.casino.cryptoreplenishmentprocess.property.CryptoProvidersApiKeysProperty;
 import com.casino.cryptoreplenishmentprocess.service.CryptoReplenishmentService;
@@ -31,11 +26,10 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
     private final CryptoReplenishmentMessageToReplenishmentMapperImpl cryptoReplenishmentMessageToReplenishmentMapper;
     private final ReplenishmentApi replenishmentApi;
     private final UserApi userApi;
-
-    private static final String ETHER_SCAN_URL = "https://api.etherscan.io/api";
-    private static final String BSC_SCAN_URL = "https://api.bscscan.com";
-    private static final String TRON_GRID_URL = "https://api.trongrid.io";
-    private static final String BLOCKCHAIN_URL = "https://blockchain.info";
+    private final EtherScanApi etherScanApi;
+    private final TronGridApi tronGridApi;
+    private final BscScanApi bscScanApi;
+    private final BlockchainApi blockchainApi;
     private static final String GET_COINS_DATA_URL = "https://api.coingecko.com/api/v3/simple/price?ids=tron,bitcoin,tether,ethereum,binancecoin&vs_currencies=rub";
 
     @Override
@@ -48,7 +42,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                 return Flux.interval(Duration.ofSeconds(4))
                         .take(Duration.ofMinutes(15))
                         .takeUntil(aBoolean -> untilSignal.get() || System.currentTimeMillis() >= cryptoReplenishmentMessage.getUntilTimestamp())
-                        .flatMap(ignored -> Mono.zip(getTrxAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
+                        .flatMap(ignored -> Mono.zip(tronGridApi.getTrxAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
                                         replenishmentApi.findCryptoReplenishmentSessionByUserIdAndCurrency(cryptoReplenishmentMessage.getUserId(), cryptoReplenishmentMessage.getCurrency())
                                                 .switchIfEmpty(Mono.fromRunnable(() -> untilSignal.set(true))))
                                 .doOnNext(d -> log.info("Executing Mono.zip in method: handleTrxCryptoReplenishment, class: {}", CryptoReplenishmentServiceImpl.class))
@@ -99,7 +93,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
             return Flux.interval(Duration.ofSeconds(4))
                     .take(Duration.ofMinutes(15))
                     .takeUntil(aBoolean -> untilSignal.get() || System.currentTimeMillis() >= cryptoReplenishmentMessage.getUntilTimestamp())
-                    .flatMap(ignored -> Mono.zip(getTrxAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
+                    .flatMap(ignored -> Mono.zip(tronGridApi.getTrxAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
                                     replenishmentApi.findCryptoReplenishmentSessionByUserIdAndCurrency(cryptoReplenishmentMessage.getUserId(), cryptoReplenishmentMessage.getCurrency())
                                     .switchIfEmpty(Mono.fromRunnable(() -> untilSignal.set(true))))
                             .doOnNext(d -> log.info("Executing Mono.zip in method: handleUsdtTrc20CryptoReplenishment, class: {}", CryptoReplenishmentServiceImpl.class))
@@ -160,7 +154,10 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
             return Flux.interval(Duration.ofSeconds(4))
                     .take(Duration.ofMinutes(15))
                     .takeUntil(aBoolean -> untilSignal.get() || System.currentTimeMillis() >= cryptoReplenishmentMessage.getUntilTimestamp())
-                    .flatMap(ignored -> Mono.zip(getEthAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
+                    .flatMap(ignored -> Mono.zip(etherScanApi.getEthAccountTransactions(
+                            cryptoProvidersApiKeysProperty.getEtherScan(),
+                            cryptoReplenishmentMessage.getRecipientAddress()
+                                    ),
                                     replenishmentApi.findCryptoReplenishmentSessionByUserIdAndCurrency(cryptoReplenishmentMessage.getUserId(), cryptoReplenishmentMessage.getCurrency())
                                     .switchIfEmpty(Mono.fromRunnable(() -> untilSignal.set(true))))
                             .doOnNext(d -> log.info("Executing Mono.zip in method: handleEthCryptoReplenishment, class: {}", CryptoReplenishmentServiceImpl.class))
@@ -208,7 +205,10 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
             return Flux.interval(Duration.ofSeconds(4))
                     .take(Duration.ofMinutes(15))
                     .takeUntil(aBoolean -> untilSignal.get() || System.currentTimeMillis() >= cryptoReplenishmentMessage.getUntilTimestamp())
-                    .flatMap(ignored -> Mono.zip(getBscAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
+                    .flatMap(ignored -> Mono.zip(bscScanApi.getBscAccountTransactions(
+                            cryptoProvidersApiKeysProperty.getBscScan(),
+                            cryptoReplenishmentMessage.getRecipientAddress()
+                                    ),
                                     replenishmentApi.findCryptoReplenishmentSessionByUserIdAndCurrency(cryptoReplenishmentMessage.getUserId(), cryptoReplenishmentMessage.getCurrency())
                                             .switchIfEmpty(Mono.fromRunnable(() -> untilSignal.set(true))))
                             .doOnNext(d -> log.info("Executing Mono.zip in method: handleBscCryptoReplenishment, class: {}", CryptoReplenishmentServiceImpl.class))
@@ -256,7 +256,7 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
             return Flux.interval(Duration.ofSeconds(4))
                     .take(Duration.ofMinutes(15))
                     .takeUntil(aBoolean -> untilSignal.get() || System.currentTimeMillis() >= cryptoReplenishmentMessage.getUntilTimestamp())
-                    .flatMap(ignored -> Mono.zip(getBtcAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
+                    .flatMap(ignored -> Mono.zip(blockchainApi.getBtcAccountTransactions(cryptoReplenishmentMessage.getRecipientAddress()),
                                     replenishmentApi.findCryptoReplenishmentSessionByUserIdAndCurrency(cryptoReplenishmentMessage.getUserId(), cryptoReplenishmentMessage.getCurrency())
                                             .switchIfEmpty(Mono.fromRunnable(() -> untilSignal.set(true))))
                             .doOnNext(d -> log.info("Executing Mono.zip in method: handleBtcCryptoReplenishment, class: {}", CryptoReplenishmentServiceImpl.class))
@@ -293,55 +293,6 @@ public class CryptoReplenishmentServiceImpl implements CryptoReplenishmentServic
                     .then(replenishmentApi.deleteCryptoReplenishmentSessionByUserIdAndCurrency(cryptoReplenishmentMessage.getUserId(),
                             cryptoReplenishmentMessage.getCurrency()));
         });
-    }
-
-    private Mono<TrxTransactionsDto> getTrxAccountTransactions(String address){
-        WebClient.Builder webClient = WebClient.builder();
-
-        return webClient
-                .baseUrl(TRON_GRID_URL + "/v1/accounts/" + address + "/transactions?limit=4")
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(TrxTransactionsDto.class);
-    }
-
-    private Mono<EthTransactionsDto> getEthAccountTransactions(String address){
-        WebClient.Builder webClient = WebClient.builder();
-
-        return webClient
-                .baseUrl(ETHER_SCAN_URL + "/api?module=account&address=" + address
-                + "&sort=desc&apikey=" + cryptoProvidersApiKeysProperty.getEtherScan()
-                + "&offset=4&page=1&action=txlist")
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(EthTransactionsDto.class);
-    }
-
-    private Mono<BscTransactionsDto> getBscAccountTransactions(String address){
-        WebClient.Builder webClient = WebClient.builder();
-
-        return webClient
-                .baseUrl(BSC_SCAN_URL + "/api?module=account&address=" + address
-                        + "&sort=desc&apikey=" + cryptoProvidersApiKeysProperty.getBscScan()
-                        + "&offset=4&page=1&action=txlist")
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(BscTransactionsDto.class);
-    }
-
-    private Mono<BtcTransactionsDto> getBtcAccountTransactions(String address){
-        WebClient.Builder webClient = WebClient.builder();
-
-        return webClient
-                .baseUrl(BLOCKCHAIN_URL + "/rawaddr/" + address
-                + "?limit=4")
-                .build()
-                .get()
-                .retrieve()
-                .bodyToMono(BtcTransactionsDto.class);
     }
 
     private Mono<CoinsDataDto> getCoinsData(){
